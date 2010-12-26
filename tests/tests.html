@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+</head>
+<body>
+    
+<h1>This pages runs some tests</h1>
+
+<script src="../SmartStorage.js"></script>
+<script language="JavaScript" src="../tools/jsunit/app/jsUnitCore.js"></script>
+
+<script>
+
+var a, b;
+
+function setUp() {
+    // Kill any previous
+    window.localStorage.clear();
+    
+    a = new SmartStorage("testdb1");
+    b = new SmartStorage("testdb2");
+
+    a.set("val1", "testval1");
+    b.set("val1", "testval2");
+}
+
+// Test we can create new dbs, and they operate independantly.
+function testMultipleDbs() {
+    assertEquals(a.get("val1"), "testval1");
+    assertEquals(b.get("val1"), "testval2");
+}
+
+function testBooleanStorage() {
+    a.set("my_true", true)
+    a.set("my_false", false)
+    assertTrue(a.get("my_true"));
+    assertFalse(a.get("my_false"));
+}
+
+function testArrayStorage() {
+    my_array = [1,2,3,4,5];
+    a.set("my_array", my_array);
+    assertEquals(a.get("my_array")[3], my_array[3]);
+}
+
+function testObjectStorage() {
+    my_object = {
+        "key1": "value1",
+        "key2": "value2",
+        "key3": [1,2,3,4,5]
+    };
+    a.set("my_object", my_object);
+    assertEquals(my_object.key1, a.get("my_object").key1);
+    assertEquals(my_object.key2, a.get("my_object").key2);
+    assertEquals(my_object.key3[3], a.get("my_object").key3[3]);
+}
+
+function testNullStorage() {
+    a.set("my_null", null)
+    assertNull(a.get("my_null"));
+}
+
+function testIntStorage() {
+    a.set("my_int", 1);
+    assertEquals(a.get("my_int"), 1);
+    a.incr("my_int");
+    assertEquals(a.get("my_int"), 2);
+}
+
+function testFunctionStorage() {
+    try {
+        var ran = true;
+        a.set("my_func", function() { return false; });
+        var ran2 = true;
+    } catch(e) {
+        assertTrue(ran);
+        assertUndefined(ran2);
+    }
+}
+
+// Test append function
+function testAppend() {
+    a.set("my_append", "Hello");
+    assertEquals(a.get("my_append"), "Hello");
+    a.append("my_append", " World");
+    assertEquals(a.get("my_append"), "Hello World");
+}
+function testFirstAppend() {
+    a.append("my_append", "Hello")
+    assertEquals(a.get("my_append"), "Hello");
+}
+function testAppendReturnValue() {
+    a.set("my_append", "Hello");
+    assertEquals(a.append("my_append", " World"), 11);
+    assertEquals(a.append("my_append", " Again"), 17);
+    assertEquals(a.get("my_append"), "Hello World Again");
+}
+
+// Test incr function
+function testIncr() {
+    a.set("my_incr", 1)
+    assertEquals(a.get("my_incr"), 1)
+    a.incr("my_incr")
+    assertEquals(a.get("my_incr"), 2)
+}
+function testIncrReturnValue() {
+    a.set("my_incr", 1)
+    assertEquals(a.incr("my_incr"), 2);
+    assertEquals(a.get("my_incr"), 2)
+}
+
+// Load this page directly to do some very basic tests/debugging
+
+setUp();
+testAppend();
+
+</script>
+
+</body>
+</html>
