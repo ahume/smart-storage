@@ -38,6 +38,13 @@ function testBooleanStorage() {
     assertFalse(a.get("my_false"));
 }
 
+function testStringStorage() {
+    a.set("val1", "testval1");
+    a.set("val2", (new String("testval2")));
+    assertEquals(a.get("val1"), "testval1");
+    assertEquals(a.get("val2"), "testval2");
+}
+
 function testArrayStorage() {
     my_array = [1,2,3,4,5];
     a.set("my_array", my_array);
@@ -68,6 +75,23 @@ function testIntStorage() {
     assertEquals(a.get("my_int"), 2);
 }
 
+function testRemove() {
+    a.set("key", "value");
+    a.remove("key");
+    assertNull(a.get("key"));
+}
+
+function testClassInstanceStorage() {
+    function myClass(name) {
+        this.key = name;
+        this.my_array = [1,2,3,4,5];
+    }
+    var my_instance = new myClass('test');
+    a.set("my_instance", my_instance);
+    assertEquals(a.get("my_instance").key, my_instance.key);
+    assertEquals(a.get("my_instance").my_array[3], my_instance.my_array[3]);
+}
+
 function testFunctionStorage() {
     try {
         var ran = true;
@@ -87,8 +111,20 @@ function testAppend() {
     assertEquals(a.get("my_append"), "Hello World");
 }
 function testFirstAppend() {
-    a.append("my_append", "Hello")
+    a.append("my_append", "Hello");
     assertEquals(a.get("my_append"), "Hello");
+}
+function testAppendWrongType() {
+    my_object = {"an": "object"};
+    a.set("my_append", my_object);
+    try {
+        var ran = true;
+        a.append("my_append", " World");
+        var ran2 = true;
+    } catch(e) {
+        assertTrue(ran);
+        assertUndefined(ran2);
+    }
 }
 function testAppendReturnValue() {
     a.set("my_append", "Hello");
@@ -99,21 +135,97 @@ function testAppendReturnValue() {
 
 // Test incr function
 function testIncr() {
-    a.set("my_incr", 1)
-    assertEquals(a.get("my_incr"), 1)
-    a.incr("my_incr")
-    assertEquals(a.get("my_incr"), 2)
+    a.set("my_incr", 1);
+    assertEquals(a.get("my_incr"), 1);
+    a.incr("my_incr");
+    assertEquals(a.get("my_incr"), 2);
+}
+function testIncrWrongType() {
+    a.set("my_incr", "bad string");
+    a.incr("my_incr");
+    assertEquals(a.get("my_incr"), 1);
+}
+function testIncrNullType() {
+    a.incr("my_incr");
+    assertEquals(a.get("my_incr"), 1);
+}
+function testIncrFloatType() {
+    // Hmmm, not actually sure what this is meant to do.
+    a.set("my_incr", 1.5);
+    a.incr("my_incr");
+    assertEquals(a.get("my_incr"), 2.5);
 }
 function testIncrReturnValue() {
-    a.set("my_incr", 1)
+    a.set("my_incr", 1);
     assertEquals(a.incr("my_incr"), 2);
-    assertEquals(a.get("my_incr"), 2)
+    assertEquals(a.get("my_incr"), 2);
+}
+function testVariousIncrDecr() {
+    a.set("adh", 0);
+    assertEquals(a.decr("adh"), -1);
+    assertEquals(a.decrby("adh", 3), -4);
+    assertEquals(a.incrby("adh", 10), 6);
+    assertEquals(a.incr("adh"), 7);
 }
 
-// Load this page directly to do some very basic tests/debugging
+// Test incrby function
+function testIncrby() {
+    a.set("my_incr", 7);
+    assertEquals(a.get("my_incr"), 7);
+    a.incrby("my_incr", 3);
+    assertEquals(a.get("my_incr"), 10);
+}
+
+// Test incrby function
+function testDecr() {
+    a.set("my_incr", 7);
+    assertEquals(a.get("my_incr"), 7);
+    a.decr("my_incr");
+    assertEquals(a.get("my_incr"), 6);
+}
+
+// Test incrby function
+function testDecrby() {
+    a.set("my_incr", 7);
+    assertEquals(a.get("my_incr"), 7);
+    a.decrby("my_incr", 3);
+    assertEquals(a.get("my_incr"), 4);
+}
+
+// Test rename function
+function testRename() {
+   a.set("key1", "value");
+   a.rename("key1", "key2");
+   assertEquals(a.get("key2"), "value");
+   assertNull(a.get("key1"));
+}
+function testRenameDupeKeys() {
+    a.set("key1", "value");
+    try {
+        var ran = true;
+        a.rename("key1", "key1");
+        var ran2 = true;
+    } catch(e) {
+        assertTrue(ran);
+        assertUndefined(ran2);
+    }
+}
+function testRenameNonExistantKey() {
+    try {
+        var ran = true;
+        a.rename("key3", " key2");
+        var ran2 = true;
+    } catch(e) {
+        assertTrue(ran);
+        assertUndefined(ran2);
+    }
+}
 
 setUp();
-testAppend();
+a.set("key", "value");
+console.log(a.get("key"));
+a.remove("key");
+console.log(a.get("key"));
 
 </script>
 

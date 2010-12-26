@@ -1,1 +1,47 @@
-Wrapper around localStorage for useful things.
+This is a light wrapper around HTML5 localStorage. It doesn't attempt to polyfill older browsers, so any application using it needs to make sure that the application handles that gracefully.
+
+As well as the normal get/set/remove methods, it also contains other potentially useful ways of manipulating the store. Many of these operations are inspired by Redis commands. A full list of current methods is below as well a really simple example.
+
+Example:
+========
+
+var store = new SmartStorage("my_store");
+
+store.set("key", "value");
+store.get("key");
+>> "value"
+
+store.set("my_object", {"key1": "value1", "key2": "value2"});
+store.get("my_object").key2;
+>> "value2"
+
+store.set("my_int", 10);
+store.incr("my_int");
+>> 11
+store.incr("my_int");
+>> 12
+
+Implemented methods:
+====================
+
+set(key, val) - Set key to the value. Overrides anything that is already set.
+
+get(key) - Get value for passed in key. Returns null if it doesn't exist.
+
+remove(key) - Removes an entry from the browser store.
+
+append(val) - If key exists and is a string, this appends the value to the end of that string, and returns the new length of the string. If key does not exist it creates it, similar to set().
+
+incr() - Increments the stored value by one. If it does not exist or is of the wrong type the value is set to 0 before incrementing. Returns the value of the key after the increment.
+
+incrby(val) - Increments the stored value by the passed in value. If it does not exist or is of the wrong type the value is set to 0 before incrementing. Returns the value of the key after the increment.
+
+decr() - Decrements the stored value by the passed in value. If it does not exist or is of the wrong type the value is set to 0 before decrementing. Returns the value of the key after the decrement.
+
+decrby(val) - Decrements the stored value by the passed in value. If it does not exist or is of the wrong type the value is set to 0 before decrementing. Returns the value of the key after the decrement.
+
+rename(key, newkey) - Renames key to newkey. Throws an error if key and newkey are the same, or if key does not exist. Overwrites existing newkey.
+
+
+More:
+- Can we guarantee atomicity of certain operations? eg. incr, append
