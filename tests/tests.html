@@ -221,12 +221,116 @@ function testRenameNonExistantKey() {
     }
 }
 
-setUp();
-a.set("key", "value");
-console.log(a.get("key"));
-a.remove("key");
-console.log(a.get("key"));
+// Test strlength function
+function testStrLength() {
+    a.set("key1", "value")
+    assertEquals(a.strlength("key1"), 5)
+}
+function testStrLengthNoExist() {
+    assertEquals(a.strlength("non-existant-key"), 0)
+}
+function testStrLengthWrongType() {
+    a.set("key1", [1,2,3,4,5])
+    try {
+        var ran = true;
+        assertEquals(a.strlength("key1"), 5)
+        var ran2 = true;
+    } catch(e) {
+        assertTrue(ran);
+        assertUndefined(ran2);
+    }
+}
 
+// Test setnx function
+function testSetnx() {
+    assertTrue(a.setnx("key1", "value1"));
+    assertEquals(a.get("key1"), "value1");
+    assertFalse(a.setnx("key1", "value2"));
+    assertEquals(a.get("key1"), "value1");
+}
+
+// Test getset function
+function testGetset() {
+    assertNull(a.getset("key1", "value1"));
+    assertEquals(a.getset("key1", "value2"), "value1");
+    assertEquals(a.get("key1"), "value2");
+}
+
+// Test setex functions
+function testSetWithExpiry() {
+    // Set a two second expiry time.
+    // Don't have a proper jsUnit test for this yet.
+    // Any ideas how to simulate the passing of time within the cache?
+    // Meanwhile, run this page directly and it tests the cache.
+    a.set("key1", "value1", 5 * 1000)
+    assertEquals(a.get("key1"), "value1");
+}
+
+// Test push functions
+function testPush() {
+    a.set("key1", [1,2,3,4,5]);
+    a.push("key1", "value1");
+    assertEquals(a.get("key1")[4], 5);
+    assertEquals(a.get("key1")[5], "value1");
+}
+function testPushWithNoArray() {
+    a.push("key1", "value1");
+    assertEquals(a.get("key1")[0], "value1");
+}
+function testPushWithWrongType() {
+    a.set("key1", "a string");
+    try {
+        var ran = true;
+        a.push("key1", "value1");
+        var ran2 = true;
+    } catch(e) {
+        assertTrue(ran);
+        assertUndefined(ran2);
+    }
+}
+
+// Test pop functions
+function testPop() {
+    a.set("key1", [1,2,3,4,5]);
+    assertEquals(a.get("key1").length, 5);
+    assertEquals(a.pop("key1"), 5);
+    assertEquals(a.get("key1").length, 4);
+}
+function testPopWithNonExistantKey() {
+    try {
+        var ran = true;
+        a.pop("key1");
+        var ran2 = true;
+    } catch(e) {
+        assertTrue(ran);
+        assertUndefined(ran2);
+    }
+}
+function testPopWithWrongType() {
+    a.set("key1", "a string");
+    try {
+        var ran = true;
+        a.pop("key1");
+        var ran2 = true;
+    } catch(e) {
+        assertTrue(ran);
+        assertUndefined(ran2);
+    }
+}
+
+// Test cache expiry manually Should output, "value1, value1, null" over 6 seconds.
+function testCache() {
+    setUp();
+    a.set("man-key1", "value1", 5 * 1000);
+    console.log(a.get("man-key1"));
+    setTimeout(function() {
+        console.log(a.get("man-key1"));
+    }, 3000);
+    setTimeout(function() {
+        console.log(a.get("man-key1"));
+    }, 6000);
+}
+//testCache();
 </script>
 
 </body>

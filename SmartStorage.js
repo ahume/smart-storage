@@ -1,5 +1,6 @@
 /*
-Copyright (c) 2010 Andy Hume (http://andyhume.net, andyhume@gmail.com)
+MIT Licensed.
+Copyright (c) 2010 Andy Hume (http://andyhume.net, andyhume@gmail.com).
  
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -38,8 +39,12 @@ function SmartStorage(dbname) {
 * @param {String} key The post db prefix key to store the value against.
 * @param value The value to store
 */
-SmartStorage.prototype._setItemForDb = function(key, value) {
-    return localStorage.setItem(this.dbname + '_' + key, JSON.stringify(value));
+SmartStorage.prototype._setItemForDb = function(key, value, time) {
+    value = JSON.stringify(value);
+    if (time) {
+        value = ((new Date()).getTime() + time) + "--cache--" + value;
+    }
+    return localStorage.setItem(this.dbname + '_' + key, value);
 }
 
 /**
@@ -50,8 +55,17 @@ SmartStorage.prototype._setItemForDb = function(key, value) {
 */
 SmartStorage.prototype._getItemForDb = function(key) {
     var prefixed_key = this.dbname + '_' + key;
-    // Use getItem so it returns null in Safari (not undefined).
-    return localStorage.getItem(prefixed_key) && JSON.parse(localStorage[prefixed_key]);
+    var value = localStorage.getItem(prefixed_key);
+    if (value && value.indexOf('--cache--') > -1) {
+        // If the expiry time has passed then return null.
+        var time = value.split("--cache--")[0];
+        if ( ((new Date()).getTime()) > time ) {
+            value = null;
+        } else {
+            value = value.split("--cache--")[1];
+        }
+    }
+    return JSON.parse(value);
 }
 
 /**
@@ -68,14 +82,14 @@ SmartStorage.prototype._removeItemForDb = function(key) {
 * @param {String} key The key to store the value against.
 * @param value The value to store
 */
-SmartStorage.prototype.set = function(key, value) {
+SmartStorage.prototype.set = function(key, value, time) {
     if (arguments.length < 2) {
-        throw "SmartStorage error: set() requires 2 arguments."
+        throw "SmartStorage error: set() requires at least 2 arguments."
     }
     if (SmartStorage.typeOf(value) === "function") {
         throw "SmartStorage error: Can't store function reference."
     }
-    return this._setItemForDb(key, value);
+    return this._setItemForDb(key, value, time);
 }
 
 /**
@@ -183,17 +197,98 @@ SmartStorage.prototype.rename = function(key, newkey) {
         throw "SmartStorage error: Cannot rename key to itself."
     }
     var value = this._getItemForDb(key);
-    if (!value) {
+    if (value === null) {
         throw "SmartStorage error: Cannot rename non-existant key."
     }
     this._setItemForDb(newkey, this._getItemForDb(key));
     this._removeItemForDb(key);
 }
 
+/**
+* Get the length of a string in the store.
+* @param {String} key The key.
+* @returns Length of string, or 0 if key not set.
+*/
+SmartStorage.prototype.strlength = function(key) {
+    var value = this._getItemForDb(key);
+    if (SmartStorage.typeOf(value) !== 'string') {
+        if (value === null) {
+            value = "";
+        } else {
+            throw "SmartStorage error: Value must be a string to test its length."
+        }
+        
+    }
+    return value.length;
+}
+
+/**
+* Set key to value if no key is set there.
+* @param {String} key The key.
+* @param value The value to set.
+* @returns true if the key was set, false if not.
+*/
+SmartStorage.prototype.setnx = function(key, value) {
+    if (this._getItemForDb(key) === null) {
+        this.set(key, value);
+        return true;
+    }
+    return false;
+}
+
+/**
+* Set key to value if no key is set there.
+* @param {String} key The key.
+* @param value The value to set.
+* @returns true if the key was set, false if not.
+*/
+SmartStorage.prototype.getset = function(key, value) {
+    var old_value = this._getItemForDb(key);
+    this.set(key, value);
+    return old_value;
+}
+
+/**
+* Push a value on to an array. If no existing array then create it.
+* @param {String} key The key of the array.
+* @param value The value to push on to the array
+* @returns the length of the array after push.
+*/
+SmartStorage.prototype.push = function(key, value) {
+    var val = this._getItemForDb(key);
+    if (val === null) {
+        val = [];
+    } else 
+    if (SmartStorage.typeOf(val) !== 'array') {
+        throw "SmartStorage error: Value must be an array to push a value on it."
+    }
+    val.push(value);
+    this.set(key, val);
+    return val.length
+}
+
+/**
+* Pop a value from the end of an array.
+* @param {String} key The key of the array.
+* @returns the length of the array after push.
+*/
+SmartStorage.prototype.pop = function(key) {
+    var value = this._getItemForDb(key);
+    if (value === null) {
+        throw "SmartStorage error: Cannot pop from non-existant key."
+    }
+    if (SmartStorage.typeOf(value) !== 'array') {
+        throw "SmartStorage error: Value must be an array to pop a value from it."
+    }
+    var popped_value = value.pop();
+    this.set(key, value);
+    return popped_value;
+}
+
 
 
 /**
-* @returns {Boolean} Does the browser have localStorage support?
+* @returns {Boolean} Does the browser have localStorage API?
 */
 SmartStorage.browserIsSupported = function() {
     try {
