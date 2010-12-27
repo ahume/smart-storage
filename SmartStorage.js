@@ -144,7 +144,10 @@ SmartStorage.prototype.append = function(key, value) {
 * @param {int} increment The number to increment by.
 * @returns The value of the key after the increment.
 */
-SmartStorage.prototype.incrby = function(key, increment) {
+SmartStorage.prototype.incr = function(key, increment) {
+    if (!increment) {
+        increment = 1;
+    }
     var old_value = this._getItemForDb(key);
     if (SmartStorage.typeOf(old_value) !== 'number') {
         old_value = 0;
@@ -155,35 +158,17 @@ SmartStorage.prototype.incrby = function(key, increment) {
 }
 
 /**
-* Increments the stored value by one. If it does not exist or is
-* of the wrong type the value is set to 0 before incrementing.
-* @param {String} key The key to store the value against.
-* @returns The value of the key after the increment.
-*/
-SmartStorage.prototype.incr = function(key) {
-    return this.incrby(key, 1);
-}
-
-/**
-* Decrements the stored value by the passed in value. If it does
-* not exist or is of the wrong type the value is set to 0 before
-* decrementing.
-* @param {String} key The key to decrement.
-* @param {int} decrement The number to decrement by.
-* @returns The value of the key after the decrement.
-*/
-SmartStorage.prototype.decrby = function(key, decrement) {
-    return this.incrby(key, -decrement);
-}
-
-/**
 * Decrements the stored value by 1. If it does not exist or is of the
 * wrong type the value is set to 0 before decrementing.
 * @param {String} key The key to decrement.
 * @returns The value of the key after the decrement.
 */
-SmartStorage.prototype.decr = function(key) {
-    return this.incrby(key, -1);
+SmartStorage.prototype.decr = function(key, increment) {
+    if (!increment) {
+        increment = 1;
+    }
+    increment = -increment;
+    return this.incr(key, increment);
 }
 
 /**

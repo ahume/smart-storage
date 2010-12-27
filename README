@@ -36,13 +36,9 @@ remove(key) - Removes an entry from the browser store.
 
 append(val) - If key exists and is a string, this appends the value to the end of that string, and returns the new length of the string. If key does not exist it creates it, similar to set().
 
-incr() - Increments the stored value by one. If it does not exist or is of the wrong type the value is set to 0 before incrementing. Returns the value of the key after the increment.
+incr([val]) - Increments the stored value by optional passed in val, or 1. If it does not exist or is of the wrong type the value is set to 0 before incrementing. Returns the value of the key after the increment.
 
-incrby(val) - Increments the stored value by the passed in value. If it does not exist or is of the wrong type the value is set to 0 before incrementing. Returns the value of the key after the increment.
-
-decr() - Decrements the stored value by the passed in value. If it does not exist or is of the wrong type the value is set to 0 before decrementing. Returns the value of the key after the decrement.
-
-decrby(val) - Decrements the stored value by the passed in value. If it does not exist or is of the wrong type the value is set to 0 before decrementing. Returns the value of the key after the decrement.
+decr([val]) - Decrements the stored value by optional passed in value, or 1. If it does not exist or is of the wrong type the value is set to 0 before decrementing. Returns the value of the key after the decrement.
 
 rename(key, newkey) - Renames key to newkey. Throws an error if key and newkey are the same, or if key does not exist. Overwrites existing newkey.
 

@@ -135,10 +135,12 @@ function testAppendReturnValue() {
 
 // Test incr function
 function testIncr() {
-    a.set("my_incr", 1);
-    assertEquals(a.get("my_incr"), 1);
+    a.set("my_incr", 7);
+    assertEquals(a.get("my_incr"), 7);
     a.incr("my_incr");
-    assertEquals(a.get("my_incr"), 2);
+    assertEquals(a.get("my_incr"), 8);
+    a.incr("my_incr", 3);
+    assertEquals(a.get("my_incr"), 11);
 }
 function testIncrWrongType() {
     a.set("my_incr", "bad string");
@@ -160,36 +162,21 @@ function testIncrReturnValue() {
     assertEquals(a.incr("my_incr"), 2);
     assertEquals(a.get("my_incr"), 2);
 }
-function testVariousIncrDecr() {
-    a.set("adh", 0);
-    assertEquals(a.decr("adh"), -1);
-    assertEquals(a.decrby("adh", 3), -4);
-    assertEquals(a.incrby("adh", 10), 6);
-    assertEquals(a.incr("adh"), 7);
-}
-
-// Test incrby function
-function testIncrby() {
-    a.set("my_incr", 7);
-    assertEquals(a.get("my_incr"), 7);
-    a.incrby("my_incr", 3);
-    assertEquals(a.get("my_incr"), 10);
-}
-
-// Test incrby function
+// Test decr function
 function testDecr() {
     a.set("my_incr", 7);
     assertEquals(a.get("my_incr"), 7);
     a.decr("my_incr");
     assertEquals(a.get("my_incr"), 6);
+    a.decr("my_incr", 3);
+    assertEquals(a.get("my_incr"), 3);
 }
-
-// Test incrby function
-function testDecrby() {
-    a.set("my_incr", 7);
-    assertEquals(a.get("my_incr"), 7);
-    a.decrby("my_incr", 3);
-    assertEquals(a.get("my_incr"), 4);
+function testVariousIncrDecr() {
+    a.set("adh", 0);
+    assertEquals(a.decr("adh"), -1);
+    assertEquals(a.decr("adh", 3), -4);
+    assertEquals(a.incr("adh", 10), 6);
+    assertEquals(a.incr("adh"), 7);
 }
 
 // Test rename function
