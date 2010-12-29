@@ -306,7 +306,7 @@ function testPopWithWrongType() {
 }
 
 // Test cache expiry manually Should output, "value1, value1, null" over 6 seconds.
-function testCache() {
+function manualTestCache() {
     setUp();
     a.set("man-key1", "value1", 5 * 1000);
     console.log(a.get("man-key1"));
@@ -317,7 +317,8 @@ function testCache() {
         console.log(a.get("man-key1"));
     }, 6000);
 }
-//testCache();
+//testRate();
+//manualTestCache();
 </script>
 
 </body>
