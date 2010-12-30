@@ -46,9 +46,17 @@ setnx(key, value) - Set key to value only if no value exists for that key.
 
 getset(key, value) - Sets key to value and returns the old value stored in key.
 
+expire(key, time) - Set expiry time on a key. Returns true if the key existed and expiry has been applied, false if not.
+
+persist(key) - Remove expiry time on a key. Returns true if the key existed and expiry has been cancelled, false if not.
+
 push(key, value) - Push a value on to an array. If no existing array then create it. Returns the length of the array after push.
 
 pop(key) - Pop a value from the end of an array. Returns the length of the array after push.
+
+unshift(key, value) - Add a value on to the beginning of an array. If no existing array then create it. Returns the length of the array after unshift.
+
+shift(key) - Remove a value from the beginning of an array. Returns the length of the array after shift.
 
 
 More:

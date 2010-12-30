@@ -305,20 +305,100 @@ function testPopWithWrongType() {
     }
 }
 
-// Test cache expiry manually Should output, "value1, value1, null" over 6 seconds.
+// Test unshift functions
+function testUnshift() {
+    a.set("key1", [1,2,3,4,5]);
+    assertEquals(a.get("key1")[4], 5);
+    a.unshift("key1", "value1");
+    assertEquals(a.get("key1")[5], 5);
+    assertEquals(a.get("key1")[0], "value1");
+}
+function testUnshiftWithNoArray() {
+    a.unshift("key1", "value1");
+    assertEquals(a.get("key1")[0], "value1");
+}
+function testUnshiftWithWrongType() {
+    a.set("key1", "a string");
+    try {
+        var ran = true;
+        a.unshift("key1", "value1");
+        var ran2 = true;
+    } catch(e) {
+        assertTrue(ran);
+        assertUndefined(ran2);
+    }
+}
+
+// Test shift functions
+function testShift() {
+    a.set("key1", [1,2,3,4,5]);
+    assertEquals(a.get("key1").length, 5);
+    assertEquals(a.shift("key1"), 1);
+    assertEquals(a.get("key1").length, 4);
+}
+function testShiftWithNonExistantKey() {
+    try {
+        var ran = true;
+        a.shift("key1");
+        var ran2 = true;
+    } catch(e) {
+        assertTrue(ran);
+        assertUndefined(ran2);
+    }
+}
+function testShiftWithWrongType() {
+    a.set("key1", "a string");
+    try {
+        var ran = true;
+        a.shift("key1");
+        var ran2 = true;
+    } catch(e) {
+        assertTrue(ran);
+        assertUndefined(ran2);
+    }
+}
+
+// Test cache expiry manually Should output, "value1, value1, null, value1, value1, null, value1, value1, value1" over 5 seconds.
 function manualTestCache() {
     setUp();
-    a.set("man-key1", "value1", 5 * 1000);
+    a.set("man-key1", "value1", 500);
     console.log(a.get("man-key1"));
     setTimeout(function() {
         console.log(a.get("man-key1"));
-    }, 3000);
+    }, 300);
     setTimeout(function() {
         console.log(a.get("man-key1"));
-    }, 6000);
+    }, 600);
+    setTimeout(manualTestCacheExpiry, 700);
+    setTimeout(manualTestPersist, 1400);
 }
-//testRate();
+function manualTestCacheExpiry() {
+    setUp();
+    a.set("man-key1", "value1");
+    a.expire("man-key1", 500);
+    console.log(a.get("man-key1"));
+    setTimeout(function() {
+        console.log(a.get("man-key1"));
+    }, 300);
+    setTimeout(function() {
+        console.log(a.get("man-key1"));
+    }, 600);
+}
+function manualTestPersist() {
+    setUp();
+    a.set("man-key1", "value1");
+    a.expire("man-key1", 500);
+    console.log(a.get("man-key1"));
+    setTimeout(function() {
+        console.log(a.get("man-key1"));
+        a.persist("man-key1");
+    }, 300);
+    setTimeout(function() {
+        console.log(a.get("man-key1"));
+    }, 600);
+}
 //manualTestCache();
+
 </script>
 
 </body>

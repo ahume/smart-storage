@@ -236,6 +236,35 @@ SmartStorage.prototype.getset = function(key, value) {
 }
 
 /**
+* Set expiry time on a key.
+* @param {String} key The key.
+* @param time The time to live in milliseconds.
+* @returns true if the key existed and expiry has been applied, false if not.
+*/
+SmartStorage.prototype.expire = function(key, time) {
+    var value = this._getItemForDb(key);
+    if (value !== null) {
+        this.set(key, value, time);
+        return true;
+    }
+    return false;
+}
+
+/**
+* Remove expiry time on a key.
+* @param {String} key The key.
+* @returns true if the key existed and expiry has been cancelled, false if not.
+*/
+SmartStorage.prototype.persist = function(key) {
+    var value = this._getItemForDb(key);
+    if (value !== null) {
+        this.set(key, value);
+        return true;
+    }
+    return false;
+}
+
+/**
 * Push a value on to an array. If no existing array then create it.
 * @param {String} key The key of the array.
 * @param value The value to push on to the array
@@ -272,6 +301,42 @@ SmartStorage.prototype.pop = function(key) {
     return popped_val;
 }
 
+/**
+* Add a value on to the beginning of an array. If no existing array then create it.
+* @param {String} key The key of the array.
+* @param value The value to prepend to the array
+* @returns the length of the array after unshift.
+*/
+SmartStorage.prototype.unshift = function(key, value) {
+    var val = this._getItemForDb(key);
+    if (val === null) {
+        val = [];
+    } else 
+    if (SmartStorage.typeOf(val) !== 'array') {
+        throw "SmartStorage error: Value must be an array to prepend a value to it."
+    }
+    val.unshift(value);
+    this.set(key, val);
+    return val.length
+}
+
+/**
+* Remove a value from the beginning of an array.
+* @param {String} key The key of the array.
+* @returns the length of the array after shift.
+*/
+SmartStorage.prototype.shift = function(key) {
+    var val = this._getItemForDb(key);
+    if (val === null) {
+        throw "SmartStorage error: Cannot pop from non-existant key."
+    }
+    if (SmartStorage.typeOf(val) !== 'array') {
+        throw "SmartStorage error: Value must be an array to pop a value from it."
+    }
+    var shift_val = val.shift();
+    this.set(key, val);
+    return shift_val;
+}
 
 
 /**
