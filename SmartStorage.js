@@ -38,6 +38,7 @@ function SmartStorage(dbname) {
 * @private
 * @param {String} key The post db prefix key to store the value against.
 * @param value The value to store
+* @param optional expiry time in milliseconds.
 */
 SmartStorage.prototype._setItemForDb = function(key, value, time) {
     value = JSON.stringify(value);
@@ -58,11 +59,11 @@ SmartStorage.prototype._getItemForDb = function(key) {
     var value = localStorage.getItem(prefixed_key);
     if (value && value.indexOf('--cache--') > -1) {
         // If the expiry time has passed then return null.
-        var time = value.split("--cache--")[0];
-        if ( ((new Date()).getTime()) > time ) {
+        var time_and_value = value.split("--cache--");
+        if ( ((new Date()).getTime()) > time_and_value[0] ) {
             value = null;
         } else {
-            value = value.split("--cache--")[1];
+            value = time_and_value[1];
         }
     }
     return JSON.parse(value);
@@ -80,7 +81,8 @@ SmartStorage.prototype._removeItemForDb = function(key) {
 /**
 * Set key to the value. Overrides anything that is already set.
 * @param {String} key The key to store the value against.
-* @param value The value to store
+* @param value The value to store.
+* @param optional expiry time in milliseconds.
 */
 SmartStorage.prototype.set = function(key, value, time) {
     if (arguments.length < 2) {
@@ -127,7 +129,7 @@ SmartStorage.prototype.append = function(key, value) {
         throw "SmartStorage error: set() requires 2 arguments."
     }
     var existing_value = this._getItemForDb(key);
-    if (existing_value != null && SmartStorage.typeOf(existing_value) !== 'string') {
+    if (existing_value !== null && SmartStorage.typeOf(existing_value) !== 'string') {
         throw "SmartStorage error: Can only append() to a string."
     }
     if (existing_value) {
@@ -145,7 +147,7 @@ SmartStorage.prototype.append = function(key, value) {
 * @returns The value of the key after the increment.
 */
 SmartStorage.prototype.incr = function(key, increment) {
-    if (!increment) {
+    if (!increment) { // TODO: Deal better with unexpected increment values.
         increment = 1;
     }
     var old_value = this._getItemForDb(key);
@@ -164,7 +166,7 @@ SmartStorage.prototype.incr = function(key, increment) {
 * @returns The value of the key after the decrement.
 */
 SmartStorage.prototype.decr = function(key, increment) {
-    if (!increment) {
+    if (!increment) { // TODO: Deal better with unexpected increment values.
         increment = 1;
     }
     increment = -increment;
@@ -258,16 +260,16 @@ SmartStorage.prototype.push = function(key, value) {
 * @returns the length of the array after push.
 */
 SmartStorage.prototype.pop = function(key) {
-    var value = this._getItemForDb(key);
-    if (value === null) {
+    var val = this._getItemForDb(key);
+    if (val === null) {
         throw "SmartStorage error: Cannot pop from non-existant key."
     }
-    if (SmartStorage.typeOf(value) !== 'array') {
+    if (SmartStorage.typeOf(val) !== 'array') {
         throw "SmartStorage error: Value must be an array to pop a value from it."
     }
-    var popped_value = value.pop();
-    this.set(key, value);
-    return popped_value;
+    var popped_val = val.pop();
+    this.set(key, val);
+    return popped_val;
 }
 
 
