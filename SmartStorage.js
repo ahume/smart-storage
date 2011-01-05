@@ -25,9 +25,10 @@ THE SOFTWARE.
 * SmartStorage
 * @constructor
 */
-function SmartStorage(dbname) {
+function SmartStorage(dbname, password) {
     if (SmartStorage.browserIsSupported()) {
         this.dbname = dbname;
+        this.password = password || null;
     } else {
         throw "SmartStorage error: You should catch this and deal with browsers that don't support localStorage."
     }
@@ -44,6 +45,9 @@ SmartStorage.prototype._setItemForDb = function(key, value, time) {
     value = JSON.stringify(value);
     if (time) {
         value = ((new Date()).getTime() + time) + "--cache--" + value;
+    }
+    if (SmartStorage.typeOf(this.password) === 'string') {
+        value = sjcl.encrypt(this.password, value);
     }
     return localStorage.setItem(this.dbname + '_' + key, value);
 }
@@ -65,6 +69,9 @@ SmartStorage.prototype._getItemForDb = function(key) {
         } else {
             value = time_and_value[1];
         }
+    }
+    if (SmartStorage.typeOf(this.password) === 'string') {
+        value = sjcl.decrypt(this.password, value);
     }
     return JSON.parse(value);
 }
@@ -366,4 +373,21 @@ SmartStorage.typeOf = function(value) {
         }
     }
     return s;
+}
+
+function SmartSecureStorage(dbname, password) {
+    SmartStorage.call(this, dbname);
+    this.password = password;
+}
+
+SmartSecureStorage.prototype = new SmartStorage
+
+SmartSecureStorage.prototype._setItemForDb = function(key, value, time) {
+    var enc_value = sjcl.encrypt(this.password, value);
+    return SmartStorage.prototype.set.call(this, key, enc_value, time);
+}
+
+SmartSecureStorage.prototype._getItemForDb = function(key) {
+    var enc_value = SmartStorage.prototype.get.call(this, key);
+    return sjcl.decrypt(this.password, enc_value);
 }

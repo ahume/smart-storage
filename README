@@ -2,7 +2,7 @@ This is a light wrapper around HTML5 localStorage. It doesn't attempt to polyfil
 
 As well as the normal get/set/remove methods, it also contains other potentially useful ways of manipulating the store, including setting expiry times. Many of these operations are inspired by Redis commands. A full list of current methods is below as well a simple example to get started.
 
-Minified and gzipped size of the current script is around 1k.
+It also uses SJCL to optionally allow for storing encrypted data in the store.
 
 Example:
 ========
@@ -13,6 +13,9 @@ var store = new SmartStorage("my_store");
 store.set("key", "value");
 store.get("key");
 >> "value"
+
+// To encrypt data for storage, send a password string as a second argument to SmartStorage.
+var enc_store = new SmartStorage("my_enc_store", "secret_password");
 
 // Store object/hash with expiry time of 2 minutes.
 store.set("my_object", {"key1": "value1", "key2": "value2"}, 120 * 1000); // Expires in 120*1000 = 2 minutes.
