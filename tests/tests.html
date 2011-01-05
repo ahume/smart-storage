@@ -2,14 +2,14 @@
 
 <html lang="en">
 <head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
+<script src="../sjcl.js"></script>
+<script src="../SmartStorage.js"></script>
+<script language="JavaScript" src="../tools/jsunit/app/jsUnitCore.js"></script>
 </head>
 <body>
     
 <h1>This pages runs some tests</h1>
-
-<script src="../sjcl.js"></script>
-<script src="../SmartStorage.js"></script>
-<script language="JavaScript" src="../tools/jsunit/app/jsUnitCore.js"></script>
 
 <script>
 
@@ -363,12 +363,12 @@ function testShiftWithWrongType() {
 function manualTestCache() {
     setUp();
     a.set("man-key1", "value1", 500);
-    console.log(a.get("man-key1"));
+    //console.log(a.get("man-key1"));
     setTimeout(function() {
-        console.log(a.get("man-key1"));
+        //console.log(a.get("man-key1"));
     }, 300);
     setTimeout(function() {
-        console.log(a.get("man-key1"));
+        //console.log(a.get("man-key1"));
     }, 600);
     setTimeout(manualTestCacheExpiry, 700);
     setTimeout(manualTestPersist, 1400);
@@ -377,33 +377,33 @@ function manualTestCacheExpiry() {
     setUp();
     a.set("man-key1", "value1");
     a.expire("man-key1", 500);
-    console.log(a.get("man-key1"));
+    //console.log(a.get("man-key1"));
     setTimeout(function() {
-        console.log(a.get("man-key1"));
+        //console.log(a.get("man-key1"));
     }, 300);
     setTimeout(function() {
-        console.log(a.get("man-key1"));
+        //console.log(a.get("man-key1"));
     }, 600);
 }
 function manualTestPersist() {
     setUp();
     a.set("man-key1", "value1");
     a.expire("man-key1", 500);
-    console.log(a.get("man-key1"));
+    //console.log(a.get("man-key1"));
     setTimeout(function() {
-        console.log(a.get("man-key1"));
+        //console.log(a.get("man-key1"));
         a.persist("man-key1");
     }, 300);
     setTimeout(function() {
-        console.log(a.get("man-key1"));
+        //console.log(a.get("man-key1"));
     }, 600);
 }
 //manualTestCache();
 
 var a = new SmartStorage("flip", "grrr");
-console.log(a);
+//console.log(a);
 a.set("key1", "value1");
-console.log(a.get("key1"));
+//console.log(a.get("key1"));
 
 </script>
 
