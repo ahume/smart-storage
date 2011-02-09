@@ -376,20 +376,3 @@ SmartStorage.typeOf = function(value) {
     }
     return s;
 }
-
-function SmartSecureStorage(dbname, password) {
-    SmartStorage.call(this, dbname);
-    this.password = password;
-}
-
-SmartSecureStorage.prototype = new SmartStorage
-
-SmartSecureStorage.prototype._setItemForDb = function(key, value, time) {
-    var enc_value = sjcl.encrypt(this.password, value);
-    return SmartStorage.prototype.set.call(this, key, enc_value, time);
-}
-
-SmartSecureStorage.prototype._getItemForDb = function(key) {
-    var enc_value = SmartStorage.prototype.get.call(this, key);
-    return sjcl.decrypt(this.password, enc_value);
-}
