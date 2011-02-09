@@ -10,6 +10,7 @@
 <body>
     
 <h1>This pages runs some tests</h1>
+<p><a href="http://smartstorage/tools/jsunit/testRunner.html?testpage=http://smartstorage/tests/tests.html">Run it in JSUnit</a></p>
 
 <script>
 
@@ -19,8 +20,8 @@ function setUp() {
     // Kill any previous
     window.localStorage.clear();
     
-    a = new SmartStorage("testdb1");
-    b = new SmartStorage("testdb2");
+    a = new SmartStorage("testdb1", "grrr");
+    b = new SmartStorage("testdb2", "grrr");
 
     a.set("val1", "testval1");
     b.set("val1", "testval2");

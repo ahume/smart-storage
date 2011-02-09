@@ -61,17 +61,19 @@ SmartStorage.prototype._setItemForDb = function(key, value, time) {
 SmartStorage.prototype._getItemForDb = function(key) {
     var prefixed_key = this.dbname + '_' + key;
     var value = localStorage.getItem(prefixed_key);
-    if (value && value.indexOf('--cache--') > -1) {
-        // If the expiry time has passed then return null.
-        var time_and_value = value.split("--cache--");
-        if ( ((new Date()).getTime()) > time_and_value[0] ) {
-            value = null;
-        } else {
-            value = time_and_value[1];
+    if (value) {
+        if (SmartStorage.typeOf(this.password) === 'string') {
+            value = sjcl.decrypt(this.password, value);
         }
-    }
-    if (SmartStorage.typeOf(this.password) === 'string') {
-        value = sjcl.decrypt(this.password, value);
+        if (value.indexOf('--cache--') > -1) {
+            // If the expiry time has passed then return null.
+            var time_and_value = value.split("--cache--");
+            if ( ((new Date()).getTime()) > time_and_value[0] ) {
+                value = null;
+            } else {
+                value = time_and_value[1];
+            }
+        }
     }
     return JSON.parse(value);
 }
