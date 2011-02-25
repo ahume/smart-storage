@@ -1,9 +1,9 @@
 SmartStorage
 ============
 
-This is a light wrapper around HTML5 localStorage. It doesn't attempt to polyfill older browsers, so any application using it needs to make sure that the application handles that gracefully.
+This is a light wrapper around HTML5 localStorage. It doesn't attempt to polyfill older browsers, so any application using it needs to make sure that that is handled gracefully.
 
-As well as the normal get/set/remove methods, it also contains other potentially useful ways of manipulating the store, including setting expiry times. Many of these operations are inspired by Redis commands. A full list of current methods is below as well a simple example to get started.
+As well as the normal get/set/remove methods, it also contains other potentially useful ways of manipulating the store, including setting (faux) expiry times. Many of these operations are inspired by Redis commands. A full list of current methods is below as well a simple example to get started.
 
 It also uses SJCL to optionally allow for storing encrypted data in the store.
 
@@ -71,6 +71,12 @@ Implemented so far
 
 * `shift(key)` - Remove a value from the beginning of an array. Returns the length of the array after shift.
 
+Security
+--------
+
+Data stored in local storage mechanisms is stored on users' machines in plain text without an explicit expiry time. It's a good idea to be constantly aware of this fact when choosing what type of data to store in localStorage.
+
+The JavaScript encryption gives *some* level of security, but no assurance. Ensure you use different hashed keys for different users, and don't expose the keys outside of a user's logged in session.
 
 More
 ----
