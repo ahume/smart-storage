@@ -23,6 +23,15 @@ To encrypt data for storage, send a password string as a second argument to Smar
 
     var enc_store = new SmartStorage("my_enc_store", "secret_password");
 
+This particular branch uses Workers to do the encryption, which means all calls to storage are asynchronous, and might look like:
+
+    enc_store.set("key", "value", null, function(value) {
+        // Do something with value
+    })
+    enc_store.get("key", function(value) {
+        // Do something with value
+    })
+
 
 ### Expiry
 

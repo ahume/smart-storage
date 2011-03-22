@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
+<script src="../SmartStorage.js"></script>
+<script language="JavaScript" src="../tools/jsunit/app/jsUnitCore.js"></script>
+</head>
+<body>
+    
+<h1>This pages runs some speed tests</h1>
+<p><a href="#" onclick="testSet1();return false;">testSet()</a></p>
+<p><a href="#" onclick="testSetWithEncryption2();return false;">testSetWithEncryption2()</a></p>
+<p><a href="#" onclick="testGetWithEncryption2();return false;">testGetWithEncryption2()</a></p>
+
+<script>
+
+var a, b;
+
+function setUp() {
+    // Kill any previous
+    // window.localStorage.clear();
+    
+    a = new SmartStorage("testdb1");
+    b = new SmartStorage("testdb2", "grrr");
+}
+
+function testSet1() {
+    console.time("testSet");
+    
+    a.set("key1", "Test Value 1");
+    
+    console.timeEnd("testSet");
+}
+
+function testSetWithEncryption2() {
+    console.time("testAsyncSetWithEncryption");
+    
+    b.set("key2", "Test Value 2", null, function(value) {
+	console.log(value);
+	console.timeEnd("testAsyncSetWithEncryption");
+});
+}
+
+function testGetWithEncryption2() {
+    console.time("testAsyncGetWithEncryptionAgain");
+    
+    b.get("key2", function(value) {
+		console.log(value);
+		console.timeEnd("testAsyncGetWithEncryptionAgain");
+	});
+}
+
+setUp();
+
+</script>
+
+</body>
+</html>

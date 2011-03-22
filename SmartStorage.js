@@ -30,9 +30,6 @@ function SmartStorage(dbname, password) {
         this.dbname = dbname;
         this.password = password || null;
         this.enc_worker = new Worker("../sjcl.js");
-        this.enc_worker.onmessage = function(e) {
-            console.log(e.data);
-        }
     } else {
         throw "SmartStorage error: You should catch this and deal with browsers that don't support localStorage."
     }
@@ -45,16 +42,24 @@ function SmartStorage(dbname, password) {
 * @param value The value to store
 * @param optional expiry time in milliseconds.
 */
-SmartStorage.prototype._setItemForDb = function(key, value, time) {
+SmartStorage.prototype._setItemForDb = function(key, value, time, callback) {
     value = JSON.stringify(value);
     if (time) {
         value = ((new Date()).getTime() + time) + "--cache--" + value;
     }
+    
+    // If we're encrypting, then the rest happens in the callback.
+    var me = this;
     if (SmartStorage.typeOf(this.password) === 'string') {
+        this.enc_worker.onmessage = function(e) {
+            localStorage.setItem(me.dbname + '_' + key, e.data);
+            callback(e.data);
+        }
         this.enc_worker.postMessage({"set": true, "password": this.password, "value": value })
-        //value = this.sjcl.encrypt(this.password, value);
     }
-    //return localStorage.setItem(this.dbname + '_' + key, value);
+    
+    // Otherwise just set and return values synchronously.
+    return localStorage.setItem(this.dbname + '_' + key, value);
 }
 
 /**
@@ -67,23 +72,19 @@ SmartStorage.prototype._getItemForDb = function(key, callback) {
     var prefixed_key = this.dbname + '_' + key;
     var value = localStorage.getItem(prefixed_key);
     if (value) {
+        
+        // If we're decrypting, then the rest happens in the callback.
         if (SmartStorage.typeOf(this.password) === 'string') {
-            //value = this.sjcl.decrypt(this.password, value);
             this.enc_worker.onmessage = function(e) {
-                callback(e.data);
+                value = SmartStorage.getCachableValue(e.data);
+                callback( JSON.parse(value) );
             }
             this.enc_worker.postMessage({"password": this.password, "value": value })
             return;
         }
-        if (value.indexOf('--cache--') > -1) {
-            // If the expiry time has passed then return null.
-            var time_and_value = value.split("--cache--");
-            if ( ((new Date()).getTime()) > time_and_value[0] ) {
-                value = null;
-            } else {
-                value = time_and_value[1];
-            }
-        }
+        
+        // Otherwise just return values synchronously.
+        value = SmartStorage.getCachableValue(value);
     }
     return JSON.parse(value);
 }
@@ -103,14 +104,14 @@ SmartStorage.prototype._removeItemForDb = function(key) {
 * @param value The value to store.
 * @param optional expiry time in milliseconds.
 */
-SmartStorage.prototype.set = function(key, value, time) {
+SmartStorage.prototype.set = function(key, value, time, callback) {
     if (arguments.length < 2) {
         throw "SmartStorage error: set() requires at least 2 arguments."
     }
     if (SmartStorage.typeOf(value) === "function") {
         throw "SmartStorage error: Can't store function reference."
     }
-    return this._setItemForDb(key, value, time);
+    return this._setItemForDb(key, value, time, callback);
 }
 
 /**
@@ -355,6 +356,19 @@ SmartStorage.prototype.shift = function(key) {
     var shift_val = val.shift();
     this.set(key, val);
     return shift_val;
+}
+
+SmartStorage.getCachableValue = function(value) {
+    if (value.indexOf('--cache--') > -1) {
+        // If the expiry time has passed then return null.
+        var time_and_value = value.split("--cache--");
+        if ( ((new Date()).getTime()) > time_and_value[0] ) {
+            value = null;
+        } else {
+            value = time_and_value[1];
+        }
+    }
+    return value;
 }
 
 
