@@ -29,6 +29,10 @@ function SmartStorage(dbname, password) {
     if (SmartStorage.browserIsSupported()) {
         this.dbname = dbname;
         this.password = password || null;
+        this.enc_worker = new Worker("../sjcl.js");
+        this.enc_worker.onmessage = function(e) {
+            console.log(e.data);
+        }
     } else {
         throw "SmartStorage error: You should catch this and deal with browsers that don't support localStorage."
     }
@@ -47,9 +51,10 @@ SmartStorage.prototype._setItemForDb = function(key, value, time) {
         value = ((new Date()).getTime() + time) + "--cache--" + value;
     }
     if (SmartStorage.typeOf(this.password) === 'string') {
-        value = sjcl.encrypt(this.password, value);
+        this.enc_worker.postMessage({"set": true, "password": this.password, "value": value })
+        //value = this.sjcl.encrypt(this.password, value);
     }
-    return localStorage.setItem(this.dbname + '_' + key, value);
+    //return localStorage.setItem(this.dbname + '_' + key, value);
 }
 
 /**
@@ -58,12 +63,17 @@ SmartStorage.prototype._setItemForDb = function(key, value, time) {
 * @param {String} key The key to lookup.
 * @returns The requested value.
 */
-SmartStorage.prototype._getItemForDb = function(key) {
+SmartStorage.prototype._getItemForDb = function(key, callback) {
     var prefixed_key = this.dbname + '_' + key;
     var value = localStorage.getItem(prefixed_key);
     if (value) {
         if (SmartStorage.typeOf(this.password) === 'string') {
-            value = sjcl.decrypt(this.password, value);
+            //value = this.sjcl.decrypt(this.password, value);
+            this.enc_worker.onmessage = function(e) {
+                callback(e.data);
+            }
+            this.enc_worker.postMessage({"password": this.password, "value": value })
+            return;
         }
         if (value.indexOf('--cache--') > -1) {
             // If the expiry time has passed then return null.
@@ -108,11 +118,11 @@ SmartStorage.prototype.set = function(key, value, time) {
 * @param {String} key The key to lookup.
 * @returns The requested value or null if it doesn't exist.
 */
-SmartStorage.prototype.get = function(key) {
+SmartStorage.prototype.get = function(key, callback) {
     if (arguments.length < 1) {
         throw "SmartStorage error: get() requires 1 argument."
     }
-    return this._getItemForDb(key);
+    return this._getItemForDb(key, callback);
 }
 
 /**
