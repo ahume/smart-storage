@@ -20,8 +20,8 @@ function setUp() {
     // Kill any previous
     window.localStorage.clear();
     
-    a = new SmartStorage("testdb1", "grrr");
-    b = new SmartStorage("testdb2", "grrr");
+    a = new SmartStorage("testdb1");
+    b = new SmartStorage("testdb2");
 
     a.set("val1", "testval1");
     b.set("val1", "testval2");
