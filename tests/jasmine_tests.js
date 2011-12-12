@@ -300,7 +300,7 @@ describe("SmartStorage", function() {
     
     describe("expiry functions", function() {
         // Asynchronous tests start here:
-        xit("should lose expired values after the correct time", function() {
+        it("should lose expired values after the correct time", function() {
             a.set("key1", "value1", 500);
             expect(a.get("key1")).toEqual("value1");
 
@@ -311,7 +311,7 @@ describe("SmartStorage", function() {
             });
         });
 
-        xit("should lose expired values after the correct time when set using expires method", function() {
+        it("should lose expired values after the correct time when set using expires method", function() {
             a.set("key1", "value1");
             a.expire("key1", 500);
             expect(a.get("key1")).toEqual("value1");
@@ -323,7 +323,7 @@ describe("SmartStorage", function() {
             });
         });
 
-        xit("should persist values that were once set to expire", function() {
+        it("should persist values that were once set to expire", function() {
             a.set("key1", "value1");
             a.expire("key1", 500);
 
