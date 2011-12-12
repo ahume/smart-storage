@@ -197,6 +197,88 @@ describe("SmartStorage", function() {
         
     });
     
+    describe("push functions", function() {
+        
+        it("should allow for values to be pushed on arrays", function() {
+            a.set("key1", [1,2,3,4,5]);
+            a.push("key1", "value1");
+            expect(a.get("key1")[4]).toEqual(5);
+            expect(a.get("key1")[5]).toEqual("value1");
+        });
+        
+        it("should allow for creating array on a new key", function() {
+            a.push("key1", "value1");
+            expect(a.get("key1")[0]).toEqual("value1");
+        });
+        
+        it("should throw an error if pushing on to a non array type", function() {
+            a.set("key1", "a string");
+            expect(function(){ a.push("key1", "value1"); }).toThrow();
+        });
+        
+    });
+    
+    describe("pop functions", function() {
+        
+        it("should pop values off an array", function() {
+            a.set("key1", [1,2,3,4,5]);
+            expect(a.get("key1").length).toEqual(5);
+            expect(a.pop("key1")).toEqual(5);
+            expect(a.get("key1").length).toEqual(4);
+        });
+        
+        it("should throw an error if trying to pop from non-existant key", function() {
+            expect(function() { a.pop("key1"); }).toThrow();
+        });
+        
+        it("should throw an error if trying to pop from non array type", function() {
+            a.set("key1", "a string");
+            expect(function() { a.pop("key1"); }).toThrow();
+        });
+        
+    });
+    
+    describe("unshift functions", function() {
+        
+        it("should allow for values to be unshifted on arrays", function() {
+            a.set("key1", [1,2,3,4,5]);
+            a.unshift("key1", "value1");
+            expect(a.get("key1")[5]).toEqual(5);
+            expect(a.get("key1")[0]).toEqual("value1");
+        });
+        
+        it("should allow for creating array on a new key", function() {
+            a.unshift("key1", "value1");
+            expect(a.get("key1")[0]).toEqual("value1");
+        });
+        
+        it("should throw an error if unshifting on to a non array type", function() {
+            a.set("key1", "a string");
+            expect(function(){ a.unshift("key1", "value1"); }).toThrow();
+        });
+        
+    });
+    
+    describe("shift functions", function() {
+        
+        it("should shift values off an array", function() {
+            a.set("key1", [1,2,3,4,5]);
+            expect(a.get("key1").length).toEqual(5);
+            expect(a.shift("key1")).toEqual(1);
+            expect(a.get("key1").length).toEqual(4);
+        });
+        
+        it("should throw an error if trying to pop from non-existant key", function() {
+            expect(function() { a.shift("key1"); }).toThrow();
+        });
+        
+        it("should throw an error if trying to pop from non array type", function() {
+            a.set("key1", "a string");
+            expect(function() { a.shift("key1"); }).toThrow();
+        });
+        
+    });
+    
     describe("setnx function", function() {
         it("should return false if key already exists", function() {
             expect(a.setnx("key1", "value1")).toBeTruthy();
@@ -207,7 +289,7 @@ describe("SmartStorage", function() {
     });
     
     describe("getset function", function() {
-        it("to return old value when setting new", function() {
+        it("should return old value when setting new", function() {
             expect(a.getset("key1", "value1")).toBeNull();
             expect(a.getset("key1", "value2")).toEqual("value1");
             expect(a.get("key1")).toEqual("value2");
