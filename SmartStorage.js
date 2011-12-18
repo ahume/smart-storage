@@ -29,7 +29,9 @@ function SmartStorage(dbname, password) {
     if (SmartStorage.browserIsSupported()) {
         this.dbname = dbname;
         this.password = password || null;
-        this.enc_worker = new Worker("../sjcl.js");
+        if (this.password) {
+            this.enc_worker = new Worker("../sjcl.js");
+        }
     } else {
         throw "SmartStorage error: You should catch this and deal with browsers that don't support localStorage."
     }
@@ -43,6 +45,7 @@ function SmartStorage(dbname, password) {
 * @param optional expiry time in milliseconds.
 */
 SmartStorage.prototype._setItemForDb = function(key, value, time, callback) {
+    var original_value = value;
     value = JSON.stringify(value);
     if (time) {
         value = ((new Date()).getTime() + time) + "--cache--" + value;
@@ -53,7 +56,7 @@ SmartStorage.prototype._setItemForDb = function(key, value, time, callback) {
     if (SmartStorage.typeOf(this.password) === 'string') {
         this.enc_worker.onmessage = function(e) {
             localStorage.setItem(me.dbname + '_' + key, e.data);
-            callback(e.data);
+            callback(original_value);
         }
         this.enc_worker.postMessage({"set": true, "password": this.password, "value": value })
     }
@@ -70,22 +73,25 @@ SmartStorage.prototype._setItemForDb = function(key, value, time, callback) {
 */
 SmartStorage.prototype._getItemForDb = function(key, callback) {
     var prefixed_key = this.dbname + '_' + key;
-    var value = localStorage.getItem(prefixed_key);
-    if (value) {
-        
-        // If we're decrypting, then the rest happens in the callback.
-        if (SmartStorage.typeOf(this.password) === 'string') {
-            this.enc_worker.onmessage = function(e) {
-                value = SmartStorage.getCachableValue(e.data);
-                callback( JSON.parse(value) );
-            }
-            this.enc_worker.postMessage({"password": this.password, "value": value })
+    var value = localStorage.getItem(prefixed_key);    
+
+    // If we're decrypting, then the rest happens in the callback.
+    if (SmartStorage.typeOf(this.password) === 'string') {
+        if (value === null) {
+            callback(value);
             return;
         }
-        
-        // Otherwise just return values synchronously.
-        value = SmartStorage.getCachableValue(value);
+        this.enc_worker.onmessage = function(e) {
+            value = SmartStorage.getCachableValue(e.data);
+            callback( JSON.parse(value) );
+        }
+        this.enc_worker.postMessage({"password": this.password, "value": value });
+        return;
     }
+    
+    // Otherwise just return values synchronously.
+    value = value && SmartStorage.getCachableValue(value);
+        
     return JSON.parse(value);
 }
 
@@ -96,6 +102,24 @@ SmartStorage.prototype._getItemForDb = function(key, callback) {
 */
 SmartStorage.prototype._removeItemForDb = function(key) {
     return localStorage.removeItem(this.dbname + '_' + key);
+}
+
+/**
+* A straight rename, does not impact encryption or expiry, so can be fully synchronous.
+* @private
+* @param {String} key The key to remove.
+*/
+SmartStorage.prototype._renameKey = function(key, newkey) {
+    var prefixed_key = this.dbname + '_' + key;
+    var prefixed_new_key = this.dbname + '_' + newkey;
+    
+    var value = localStorage.getItem(prefixed_key);
+    if (value === null) {
+        throw "SmartStorage error: Cannot rename non-existant key."
+    }
+
+    localStorage.setItem(prefixed_new_key, localStorage.getItem(prefixed_key));
+    localStorage.removeItem(prefixed_key);
 }
 
 /**
@@ -144,19 +168,32 @@ SmartStorage.prototype.remove = function(key) {
 * @param value The value to store
 * @returns The new length of the string.
 */
-SmartStorage.prototype.append = function(key, value) {
+SmartStorage.prototype.append = function(key, value, callback) {
     if (arguments.length < 2) {
-        throw "SmartStorage error: set() requires 2 arguments."
+        throw "SmartStorage error: append() requires at least 2 arguments."
     }
-    var existing_value = this._getItemForDb(key);
-    if (existing_value !== null && SmartStorage.typeOf(existing_value) !== 'string') {
-        throw "SmartStorage error: Can only append() to a string."
+    
+    function doAppend(existing_value) {
+        if (existing_value !== null && SmartStorage.typeOf(existing_value) !== 'string') {
+            throw "SmartStorage error: Can only append() to a string."
+        }
+        return (existing_value || "") + value;
     }
-    if (existing_value) {
-        value = existing_value + value;
+    
+    if (this.password) {
+        var me = this;
+        this._getItemForDb(key, function(v) {
+            value = doAppend(v);
+            me._setItemForDb(key, value, null, function(v) {
+                callback(v.length);
+            });
+        });
+    } else {
+        var existing_value = this._getItemForDb(key);
+        value = doAppend(existing_value);
+        this._setItemForDb(key, value);
+        return value.length;
     }
-    this._setItemForDb(key, value);
-    return value.length;
 }
 
 /**
@@ -166,17 +203,33 @@ SmartStorage.prototype.append = function(key, value) {
 * @param {int} increment The number to increment by.
 * @returns The value of the key after the increment.
 */
-SmartStorage.prototype.incr = function(key, increment) {
+SmartStorage.prototype.incr = function(key, increment, callback) {
     if (!increment) { // TODO: Deal better with unexpected increment values.
         increment = 1;
     }
-    var old_value = this._getItemForDb(key);
-    if (SmartStorage.typeOf(old_value) !== 'number') {
-        old_value = 0;
+    
+    function doIncr(existing_value) {
+        if (SmartStorage.typeOf(existing_value) !== 'number') {
+            existing_value = 0;
+        }
+        return existing_value + increment;
     }
-    var new_value = old_value + increment;
-    this._setItemForDb(key, new_value);
-    return new_value;
+    
+    var new_value,
+        me = this;
+    if (this.password) {
+        this._getItemForDb(key, function(v) {
+            new_value = doIncr(v);
+            me._setItemForDb(key, new_value, null, function(v) {
+                callback(new_value);
+            });
+        });
+    } else {
+        var existing_value = this._getItemForDb(key);
+        new_value = doIncr(existing_value);
+        this._setItemForDb(key, new_value);
+        return new_value;
+    }
 }
 
 /**
@@ -185,12 +238,12 @@ SmartStorage.prototype.incr = function(key, increment) {
 * @param {String} key The key to decrement.
 * @returns The value of the key after the decrement.
 */
-SmartStorage.prototype.decr = function(key, increment) {
+SmartStorage.prototype.decr = function(key, increment, callback) {
     if (!increment) { // TODO: Deal better with unexpected increment values.
         increment = 1;
     }
     increment = -increment;
-    return this.incr(key, increment);
+    return this.incr(key, increment, callback);
 }
 
 /**
@@ -203,12 +256,8 @@ SmartStorage.prototype.rename = function(key, newkey) {
     if (key === newkey) {
         throw "SmartStorage error: Cannot rename key to itself."
     }
-    var value = this._getItemForDb(key);
-    if (value === null) {
-        throw "SmartStorage error: Cannot rename non-existant key."
-    }
-    this._setItemForDb(newkey, this._getItemForDb(key));
-    this._removeItemForDb(key);
+
+    this._renameKey(key, newkey);
 }
 
 /**

@@ -1,17 +1,168 @@
-describe("SmartStorage", function() {
+describe ("EncryptedSmartStorage", function() {
     
-    var a, b;
+    var a = b = undefined,
+        fn = function() {};
     
     beforeEach(function() {
         // Kill any previous, and create two new storage objects.
-        window.localStorage.clear();
+        localStorage.clear();
+        a = new SmartStorage("testdb1", "password");
+    });
+    
+    it("should return the correct value", function() {
+        var result = null;
+        a.set("val1", "testval1", null, function(v){ result = v});
+        
+        waitsFor(function() {
+            return (result !== null);
+        }, "set function never returned a value", 1000);
+        
+        runs(function() {
+            a.get("val1", function(v){ result = v; });
+        });
+        
+        waitsFor(function() {
+            return (result !== null);
+        }, "get function never returned value", 1000);
+        
+        runs(function() {
+            expect(result).toEqual("testval1");
+        });
+        
+        
+    });
+    
+    it("should allow appending to strings", function() {
+        var result = null;
+        a.set("val1", "Hello", null, function(v){ result = v});
+        
+        waitsFor(function() {
+            return (result !== null);
+        }, "set function never returned a value", 1000);
+        
+        runs(function() {
+            result = null;
+            a.append("val1", " World", function(v){ result = v});
+        });
+        
+        waitsFor(function() {
+            return (result !== null);
+        }, "append function never returned value", 1000);
+        
+        runs(function() {
+            expect(result).toEqual(11);
+        });
+        
+        runs(function() {
+            result = null;
+            a.get("val1", function(v){ result = v; });
+        });
+        
+        waitsFor(function() {
+            return (result !== null);
+        }, "get function never returned value", 1000);
+        
+        runs(function() {
+            expect(result).toEqual("Hello World");
+        });
+    });
+    
+    it("should allow for values to be incremented", function() {
+        var result = null;
+        a.set("val1", 5, null, function(v) { result = v });
+        
+        waitsFor(function() {
+            return (result !== null);
+        }, "set function never returned a value", 1000);
+        
+        runs(function() {
+            result = null;
+            a.incr("val1", null, function(v) { result = v });
+        });
+        
+        waitsFor(function() {
+            return (result !== null);
+        }, "incr function never returned value", 1000);
+        
+        runs(function() {
+            expect(result).toEqual(6);
+        });
+    });
+    
+    it("should allow for values to be decremented", function() {
+        var result = null;
+        a.set("key1", 5, null, function(v) { result = v });
+        
+        waitsFor(function() {
+            return (result !== null);
+        }, "set function never returned a value", 1000);
+        
+        runs(function() {
+            result = null;
+            a.decr("key1", null, function(v) { result = v });
+        });
+        
+        waitsFor(function() {
+            return (result !== null);
+        }, "incr function never returned value", 1000);
+        
+        runs(function() {
+            expect(result).toEqual(4);
+        });
+    });
+        
+    it("should be able to rename keys", function() {
+        var result = null;
+        a.set("key1", "value", null, function(v) { result = v });
+        
+        waitsFor(function() {
+            return (result !== null);
+        }, "set function never returned value", 1000);
+                 
+        runs(function() {
+            a.rename("key1", "key2");
+            result = null;
+            a.get("key2", function(v) { result = v });
+        });
+                        
+        waitsFor(function() {
+            return (result !== null);
+        }, "get function never returned value", 1000);
+
+        runs(function() {
+            expect(result).toEqual("value");
+            result = "test val" // Because we're expecting null.
+            a.get("key1", function(v) { result = v });
+        });
+        
+        waitsFor(function() {
+            return (result === null);
+        }, "get2 function never returned value", 1000);
+        
+        runs(function() {
+            expect(result).toBeNull();
+        });
+        
+    });
+    
+});
+
+
+
+describe("SmartStorage", function() {
+    
+    var a = b = undefined;
+    
+    beforeEach(function() {
+        // Kill any previous, and create two new storage objects.
+        localStorage.clear();
         a = new SmartStorage("testdb1");
         b = new SmartStorage("testdb2");
-        a.set("val1", "testval1");
-        b.set("val1", "testval2");
     });
     
     it("should create two distinct storage objects", function() {
+        a.set("val1", "testval1");
+        b.set("val1", "testval2");
         expect(a.get("val1")).toEqual("testval1");
         expect(b.get("val1")).toEqual("testval2");
     });
@@ -307,7 +458,7 @@ describe("SmartStorage", function() {
             waits(1000);
 
             runs(function() {
-                expect(a.get("key1")).not.toEqual("value1");
+                expect(a.get("key1")).toBeNull();
             });
         });
 
@@ -319,7 +470,7 @@ describe("SmartStorage", function() {
             waits(1000);
 
             runs(function() {
-                expect(a.get("key1")).not.toEqual("value1");
+                expect(a.get("key1")).toBeNull();
             });
         });
 

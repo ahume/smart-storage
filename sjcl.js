@@ -41,9 +41,9 @@ sjcl.misc.cachedPbkdf2=function(a,b){var c=sjcl.misc.S,d;b=b||{};d=b.iter||1E3;c
 onmessage = function(d) {
     var data = d.data;
     if (data.set) {
-        var value = sjcl.encrypt(d.data.password, d.data.value);
+        var value = sjcl.encrypt(data.password, data.value);
     } else {
-        var value = sjcl.decrypt(d.data.password, d.data.value);
+        var value = sjcl.decrypt(data.password, data.value);
     }
     postMessage(value);
 }
