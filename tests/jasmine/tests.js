@@ -299,7 +299,7 @@ describe("SmartStorage", function() {
             });
         });
 
-        it("should lose expired values after the correct time when set using expires method", function() {
+        it("should lose expired values after the correct time when set using expire method", function() {
             a.set("key1", "value1");
             a.expire("key1", 500);
             expect(a.get("key1")).toEqual("value1");

@@ -59,6 +59,7 @@ SmartStorage.prototype._setItemForDb = function(key, value, time, callback) {
             callback(original_value);
         }
         this.enc_worker.postMessage({"set": true, "password": this.password, "value": value });
+        return;
     }
     
     // Otherwise just set and return values synchronously.
@@ -73,7 +74,7 @@ SmartStorage.prototype._setItemForDb = function(key, value, time, callback) {
 */
 SmartStorage.prototype._getItemForDb = function(key, callback) {
     var prefixed_key = this.dbname + '_' + key;
-    var value = localStorage.getItem(prefixed_key);    
+    var value = localStorage.getItem(prefixed_key);
 
     // If we're decrypting, then the rest happens in the callback.
     if (SmartStorage.typeOf(this.password) === 'string') {
@@ -324,7 +325,16 @@ SmartStorage.prototype.setnx = function(key, value, callback) {
 * @param value The value to set.
 * @returns The previously set value.
 */
-SmartStorage.prototype.getset = function(key, value) {
+SmartStorage.prototype.getset = function(key, value, callback) {
+    if (this.password) {
+        var me = this;
+        this._getItemForDb(key, function(v) {
+            me.set(key, value, null, function() {
+                callback(v);
+            });
+        });
+        return;
+    }
     var old_value = this._getItemForDb(key);
     this.set(key, value);
     return old_value;
@@ -336,7 +346,19 @@ SmartStorage.prototype.getset = function(key, value) {
 * @param time The time to live in milliseconds.
 * @returns true if the key existed and expiry has been applied, false if not.
 */
-SmartStorage.prototype.expire = function(key, time) {
+SmartStorage.prototype.expire = function(key, time, callback) {
+    if (this.password) {
+        var me = this;
+        this._getItemForDb(key, function(v) {
+            if (v !== null) {
+                me.set(key, value, time, function() {
+                    callback(true);
+                });
+            } 
+            callback(false);
+        });
+        return;
+    }
     var value = this._getItemForDb(key);
     if (value !== null) {
         this.set(key, value, time);
@@ -350,7 +372,19 @@ SmartStorage.prototype.expire = function(key, time) {
 * @param {String} key The key.
 * @returns true if the key existed and expiry has been cancelled, false if not.
 */
-SmartStorage.prototype.persist = function(key) {
+SmartStorage.prototype.persist = function(key, callback) {
+    if (this.password) {
+        var me = this;
+        this._getItemForDb(key, function(v) {
+            if (v !== null) {
+                me.set(key, v, null, function() {
+                    callback(true);
+                });
+            }
+            callback(false);
+        });
+        return;
+    }
     var value = this._getItemForDb(key);
     if (value !== null) {
         this.set(key, value);

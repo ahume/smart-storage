@@ -352,5 +352,152 @@ describe ("EncryptedSmartStorage", function() {
         });
     });
 
+    describe("getset function", function() {
+        it("should return old value when setting new", function() {
+            var result = null;
+            a.set("key1", "value1", null, function(v) { result = v });
+
+            waitsFor(function() {
+                return (result !== null);
+            }, "set function never returned value", 1000);
+
+            runs(function() {
+                expect(result).toEqual("value1");
+                result = null;
+                a.getset("key1", "value2", function(v) { result = v });
+            });
+
+            waitsFor(function() {
+                return (result !== null);
+            }, "getset function never returned value", 1000);
+
+            runs(function() {
+                expect(result).toEqual("value1");
+                result = null;
+                a.get("key1", function(v) { result = v });
+            });
+
+            waitsFor(function() {
+                return (result !== null);
+            }, "get function never returned value", 1000);
+
+            runs(function() {
+                expect(result).toEqual("value2");
+            });
+        });
+    });
+
+    describe("expiry functions", function() {
+        // Asynchronous tests start here:
+        it("should lose expired values after the correct time", function() {
+            var result = null;
+            a.set("key1", "value1", 500, function(v) { result = v });
+
+            waitsFor(function() {
+                return (result !== null);
+            }, "set function never returned value", 1000);
+
+            runs(function() {
+                expect(result).toEqual("value1");
+            });
+            
+            waits(1000);
+            
+            runs(function() {
+                result = "not null";
+                a.get("key1", function(v) { result = v });
+            });
+
+            waitsFor(function() {
+                return (result !== "not null");
+            }, "get function never returned value", 1000);
+
+            runs(function() {
+                expect(result).toBeNull();
+            });
+        });
+
+        it("should lose expired values after the correct time when set using expire method", function() {
+            var result = null;
+            a.set("key1", "value1", null, function(v) { result = v });
+
+            waitsFor(function() {
+                return (result !== null);
+            }, "set function never returned value", 1000);
+
+            runs(function() {
+                expect(result).toEqual("value1");
+                result = null;
+                a.expire("key1", 500, function(v) { result = v });
+            });
+
+            waitsFor(function() {
+                return (result !== null);
+            }, "expire function never returned value", 1000);
+
+            runs(function() {
+                expect(result).toBeTruthy();
+            });
+            
+            waits(1000);
+            
+            runs(function() {
+                result = "not null";
+                a.get("key1", function(v) { result = v });
+            });
+
+            waitsFor(function() {
+                return (result !== "not null");
+            }, "get function never returned value", 1000);
+
+            runs(function() {
+                expect(result).toBeNull();
+            });
+        });
+
+        it("should persist values that were once set to expire", function() {
+            var result = null;
+            a.set("key1", "value1", 500, function(v) { result = v });
+
+            waitsFor(function() {
+                return (result !== null);
+            }, "set function never returned value", 1000);
+
+            runs(function() {
+                expect(result).toEqual("value1");
+            });
+            
+            waits(300);
+            
+            runs(function() {
+                result = null;
+                a.persist("key1", function(v) { result = v });
+            });
+
+            waitsFor(function() {
+                return (result !== null);
+            }, "persist function never returned value", 1000);
+
+            runs(function() {
+                expect(result).toBeTruthy();
+            });
+
+            waits(500);
+
+            runs(function() {
+                result = null;
+                a.get("key1", function(v) { result = v });
+            });
+
+            waitsFor(function() {
+                return (result !== null);
+            }, "get function never returned value", 1000);
+
+            runs(function() {
+                expect(result).toEqual("value1");
+            });
+        });
+    });
+
 
 });
