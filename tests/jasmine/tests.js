@@ -191,24 +191,6 @@ describe("SmartStorage", function() {
 
     });
 
-    describe("Strlength function", function() {
-
-        it("should return the correct length of a string", function() {
-            a.set("key1", "value");
-            expect(a.strlength("key1")).toEqual(5);
-        });
-
-        it("should return 0 for length of a non-existant key", function() {
-            expect(a.strlength("non-existant-key")).toEqual(0);
-        });
-
-        it("should throw an error if testing length of non-string type", function() {
-            a.set("key1", [1,2,3,4,5]);
-            expect(function() { a.strlength("key1") }).toThrow();
-        });
-
-    });
-
     describe("push functions", function() {
 
         it("should allow for values to be pushed on arrays", function() {

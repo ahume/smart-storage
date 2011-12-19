@@ -274,35 +274,6 @@ SmartStorage.prototype.rename = function(key, newkey) {
 }
 
 /**
-* Get the length of a string in the store.
-* @param {String} key The key.
-* @returns Length of string, or 0 if key not set.
-*/
-SmartStorage.prototype.strlength = function(key, callback) {
-
-    function getLength(value) {
-        if (SmartStorage.typeOf(value) !== 'string') {
-            if (value === null) {
-                value = "";
-            } else {
-                throw "SmartStorage error: Value must be a string to test its length.";
-            }
-        }
-        return value.length;
-    }
-
-    if (this.password) {
-        this._getItemForDb(key, function(v) {
-            callback(getLength(v));
-        });
-        return;
-    }
-
-    var value = this._getItemForDb(key);
-    return getLength(value);
-}
-
-/**
 * Set key to value if no key is set there.
 * @param {String} key The key.
 * @param value The value to set.

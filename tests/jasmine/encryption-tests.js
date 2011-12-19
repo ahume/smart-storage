@@ -164,29 +164,6 @@ describe ("EncryptedSmartStorage", function() {
         });
     });
 
-    it("should be able to get the length of a string value", function() {
-        var result = null;
-        a.set("key1", "value", null, function(v) { result = v });
-
-        waitsFor(function() {
-            return (result !== null);
-        }, "set function never returned value", 1000);
-
-        runs(function() {
-            expect(result).toEqual("value");
-            result = null;
-            a.strlength("key1", function(v) { result = v });
-        });
-
-        waitsFor(function() {
-            return (result !== null);
-        }, "set function never returned value", 1000);
-
-        runs(function() {
-            expect(result).toEqual(5);
-        });
-    });
-
     it("should be able to push a value on to an array", function() {
         var result = null;
         a.set("key1", [1,2,3,4,5], null, function(v) { result = v });
