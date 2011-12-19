@@ -33,7 +33,7 @@ function SmartStorage(dbname, password) {
             this.enc_worker = new Worker("../sjcl.js");
         }
     } else {
-        throw "SmartStorage error: You should catch this and deal with browsers that don't support localStorage."
+        throw "SmartStorage error: You should catch this and deal with browsers that don't support localStorage.";
     }
 }
 
@@ -58,7 +58,7 @@ SmartStorage.prototype._setItemForDb = function(key, value, time, callback) {
             localStorage.setItem(me.dbname + '_' + key, e.data);
             callback(original_value);
         }
-        this.enc_worker.postMessage({"set": true, "password": this.password, "value": value })
+        this.enc_worker.postMessage({"set": true, "password": this.password, "value": value });
     }
     
     // Otherwise just set and return values synchronously.
@@ -115,7 +115,7 @@ SmartStorage.prototype._renameKey = function(key, newkey) {
     
     var value = localStorage.getItem(prefixed_key);
     if (value === null) {
-        throw "SmartStorage error: Cannot rename non-existant key."
+        throw "SmartStorage error: Cannot rename non-existant key.";
     }
 
     localStorage.setItem(prefixed_new_key, localStorage.getItem(prefixed_key));
@@ -130,10 +130,10 @@ SmartStorage.prototype._renameKey = function(key, newkey) {
 */
 SmartStorage.prototype.set = function(key, value, time, callback) {
     if (arguments.length < 2) {
-        throw "SmartStorage error: set() requires at least 2 arguments."
+        throw "SmartStorage error: set() requires at least 2 arguments.";
     }
     if (SmartStorage.typeOf(value) === "function") {
-        throw "SmartStorage error: Can't store function reference."
+        throw "SmartStorage error: Can't store function reference.";
     }
     return this._setItemForDb(key, value, time, callback);
 }
@@ -145,7 +145,7 @@ SmartStorage.prototype.set = function(key, value, time, callback) {
 */
 SmartStorage.prototype.get = function(key, callback) {
     if (arguments.length < 1) {
-        throw "SmartStorage error: get() requires 1 argument."
+        throw "SmartStorage error: get() requires 1 argument.";
     }
     return this._getItemForDb(key, callback);
 }
@@ -156,7 +156,7 @@ SmartStorage.prototype.get = function(key, callback) {
 */
 SmartStorage.prototype.remove = function(key) {
     if (arguments.length < 1) {
-        throw "SmartStorage error: remove() requires 1 argument."
+        throw "SmartStorage error: remove() requires 1 argument.";
     }
     return this._removeItemForDb(key);
 }
@@ -170,12 +170,12 @@ SmartStorage.prototype.remove = function(key) {
 */
 SmartStorage.prototype.append = function(key, value, callback) {
     if (arguments.length < 2) {
-        throw "SmartStorage error: append() requires at least 2 arguments."
+        throw "SmartStorage error: append() requires at least 2 arguments.";
     }
     
     function doAppend(existing_value) {
         if (existing_value !== null && SmartStorage.typeOf(existing_value) !== 'string') {
-            throw "SmartStorage error: Can only append() to a string."
+            throw "SmartStorage error: Can only append() to a string.";
         }
         return (existing_value || "") + value;
     }
@@ -254,7 +254,7 @@ SmartStorage.prototype.decr = function(key, increment, callback) {
 */
 SmartStorage.prototype.rename = function(key, newkey) {
     if (key === newkey) {
-        throw "SmartStorage error: Cannot rename key to itself."
+        throw "SmartStorage error: Cannot rename key to itself.";
     }
 
     this._renameKey(key, newkey);
@@ -265,17 +265,28 @@ SmartStorage.prototype.rename = function(key, newkey) {
 * @param {String} key The key.
 * @returns Length of string, or 0 if key not set.
 */
-SmartStorage.prototype.strlength = function(key) {
-    var value = this._getItemForDb(key);
-    if (SmartStorage.typeOf(value) !== 'string') {
-        if (value === null) {
-            value = "";
-        } else {
-            throw "SmartStorage error: Value must be a string to test its length."
+SmartStorage.prototype.strlength = function(key, callback) {
+
+    function getLength(value) {
+        if (SmartStorage.typeOf(value) !== 'string') {
+            if (value === null) {
+                value = "";
+            } else {
+                throw "SmartStorage error: Value must be a string to test its length.";
+            }
         }
-        
+        return value.length;
     }
-    return value.length;
+
+    if (this.password) {
+        this._getItemForDb(key, function(v) {
+            callback(getLength(v));
+        });
+        return;
+    }
+
+    var value = this._getItemForDb(key);
+    return getLength(value);
 }
 
 /**
@@ -284,7 +295,22 @@ SmartStorage.prototype.strlength = function(key) {
 * @param value The value to set.
 * @returns true if the key was set, false if not.
 */
-SmartStorage.prototype.setnx = function(key, value) {
+SmartStorage.prototype.setnx = function(key, value, callback) {
+
+    if (this.password) {
+        var me = this;
+        this._getItemForDb(key, function(v) {
+            if (v === null) {
+                me.set(key, value, null, function(v) {
+                    callback(true);
+                });
+            } else {
+                callback(false);
+            }
+        });
+        return;
+    }
+
     if (this._getItemForDb(key) === null) {
         this.set(key, value);
         return true;
@@ -293,10 +319,10 @@ SmartStorage.prototype.setnx = function(key, value) {
 }
 
 /**
-* Set key to value if no key is set there.
+* Set key to value and return old key
 * @param {String} key The key.
 * @param value The value to set.
-* @returns true if the key was set, false if not.
+* @returns The previously set value.
 */
 SmartStorage.prototype.getset = function(key, value) {
     var old_value = this._getItemForDb(key);
@@ -339,17 +365,34 @@ SmartStorage.prototype.persist = function(key) {
 * @param value The value to push on to the array
 * @returns the length of the array after push.
 */
-SmartStorage.prototype.push = function(key, value) {
-    var val = this._getItemForDb(key);
-    if (val === null) {
-        val = [];
-    } else 
-    if (SmartStorage.typeOf(val) !== 'array') {
-        throw "SmartStorage error: Value must be an array to push a value on it."
+SmartStorage.prototype.push = function(key, value, callback) {
+
+    function doPush(existing_value, value) {
+        if (existing_value === null) {
+            existing_value = [];
+        } else 
+        if (SmartStorage.typeOf(existing_value) !== 'array') {
+            throw "SmartStorage error: Value must be an array to push a value on it."
+        }
+        existing_value.push(value);
+        return existing_value;
     }
-    val.push(value);
-    this.set(key, val);
-    return val.length
+
+    if (this.password) {
+        var me = this;
+        this._getItemForDb(key, function(v) {
+            var new_value = doPush(v, value);
+            me.set(key, new_value, null, function(v) {
+                callback(v.length);
+            });
+        });
+        return;
+    }
+
+    var existing_value = this._getItemForDb(key);
+    var new_value = doPush(existing_value, value);
+    this.set(key, new_value);
+    return new_value.length;
 }
 
 /**
@@ -357,15 +400,31 @@ SmartStorage.prototype.push = function(key, value) {
 * @param {String} key The key of the array.
 * @returns the length of the array after push.
 */
-SmartStorage.prototype.pop = function(key) {
+SmartStorage.prototype.pop = function(key, callback) {
+
+    function doPop(val) {
+        if (val === null) {
+            throw "SmartStorage error: Cannot pop from non-existant key."
+        }
+        if (SmartStorage.typeOf(val) !== 'array') {
+            throw "SmartStorage error: Value must be an array to pop a value from it."
+        }
+        return val.pop();
+    }
+
+    if (this.password) {
+        var me = this;
+        this._getItemForDb(key, function(v) {
+            var popped_val = doPop(v);
+            me.set(key, v, null, function() {
+                callback(popped_val);
+            });
+        });
+        return;
+    }
+
     var val = this._getItemForDb(key);
-    if (val === null) {
-        throw "SmartStorage error: Cannot pop from non-existant key."
-    }
-    if (SmartStorage.typeOf(val) !== 'array') {
-        throw "SmartStorage error: Value must be an array to pop a value from it."
-    }
-    var popped_val = val.pop();
+    var popped_val = doPop(val);
     this.set(key, val);
     return popped_val;
 }
@@ -376,17 +435,34 @@ SmartStorage.prototype.pop = function(key) {
 * @param value The value to prepend to the array
 * @returns the length of the array after unshift.
 */
-SmartStorage.prototype.unshift = function(key, value) {
-    var val = this._getItemForDb(key);
-    if (val === null) {
-        val = [];
-    } else 
-    if (SmartStorage.typeOf(val) !== 'array') {
-        throw "SmartStorage error: Value must be an array to prepend a value to it."
+SmartStorage.prototype.unshift = function(key, value, callback) {
+
+    function doUnshift(existing_value, value) {
+        if (existing_value === null) {
+            existing_value = [];
+        } else 
+        if (SmartStorage.typeOf(existing_value) !== 'array') {
+            throw "SmartStorage error: Value must be an array to unshift a value on it."
+        }
+        existing_value.unshift(value);
+        return existing_value;
     }
-    val.unshift(value);
-    this.set(key, val);
-    return val.length
+
+    if (this.password) {
+        var me = this;
+        this._getItemForDb(key, function(v) {
+            var new_value = doUnshift(v, value);
+            me.set(key, new_value, null, function(v) {
+                callback(v.length);
+            });
+        });
+        return;
+    }
+
+    var existing_value = this._getItemForDb(key);
+    var new_value = doUnshift(existing_value, value);
+    this.set(key, new_value);
+    return new_value.length;
 }
 
 /**
@@ -394,15 +470,31 @@ SmartStorage.prototype.unshift = function(key, value) {
 * @param {String} key The key of the array.
 * @returns the length of the array after shift.
 */
-SmartStorage.prototype.shift = function(key) {
+SmartStorage.prototype.shift = function(key, callback) {
+
+    function doShift(val) {
+        if (val === null) {
+            throw "SmartStorage error: Cannot pop from non-existant key."
+        }
+        if (SmartStorage.typeOf(val) !== 'array') {
+            throw "SmartStorage error: Value must be an array to pop a value from it."
+        }
+        return val.shift();
+    }
+
+    if (this.password) {
+        var me = this;
+        this._getItemForDb(key, function(v) {
+            var popped_val = doShift(v);
+            me.set(key, v, null, function() {
+                callback(popped_val);
+            });
+        });
+        return;
+    }
+
     var val = this._getItemForDb(key);
-    if (val === null) {
-        throw "SmartStorage error: Cannot pop from non-existant key."
-    }
-    if (SmartStorage.typeOf(val) !== 'array') {
-        throw "SmartStorage error: Value must be an array to pop a value from it."
-    }
-    var shift_val = val.shift();
+    var shift_val = doShift(val);
     this.set(key, val);
     return shift_val;
 }
