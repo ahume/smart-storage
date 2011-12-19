@@ -69,6 +69,24 @@ describe("SmartStorage", function() {
         expect(function() {a.set("my_func", fn)}).toThrow();
     });
 
+    describe("Clear function", function() {
+        it("show clear a given database", function() {
+            a.set("key1", "value1");
+            a.set("key2", "value2");
+            a.set("key3", "value3");
+            a.set("key4", "value4");
+            b.set("key1", "value1");
+            b.set("key2", "value2");
+            b.set("key3", "value3");
+            b.set("key4", "value4");
+
+            a.clear();
+
+            expect(a.get("key1")).toBeNull();
+            expect(b.get("key1")).toEqual("value1");
+        })
+    });
+
     describe("Append function", function() {
 
         it("should be able to append a string to a string", function() {

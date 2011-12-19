@@ -163,6 +163,18 @@ SmartStorage.prototype.remove = function(key) {
 }
 
 /**
+* Removes all entries from the db.
+* @param {String} key The key to remove.
+*/
+SmartStorage.prototype.clear = function() {
+    for (var key in localStorage) {
+        if (key.indexOf(this.dbname) === 0) { // dbname is always index 0.
+            localStorage.removeItem(key);
+        }
+    }
+}
+
+/**
 * If key exists and is a string, this appends the value to the end of that string.
 * If key does not exist it creates it, similar to set().
 * @param {String} key The key to store the value against.
