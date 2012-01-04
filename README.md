@@ -22,9 +22,12 @@ store.get("key");
 
 To encrypt data for storage, send a password string as a second argument to SmartStorage.
 
-    var enc_store = new SmartStorage("my_enc_store", "secret_password");
+```javascript
+var enc_store = new SmartStorage("my_enc_store", "secret_password");
+```
 
-This particular branch uses Workers to do the encryption, which means all calls to storage are asynchronous, and might look like:
+Web Workers are used to do the encryption, which means all calls to storage are asynchronous, and might look like:
+
 ```javascript
 enc_store.set("key", "value", null, function(value) {
     // Do something with value
@@ -38,6 +41,7 @@ enc_store.get("key", function(value) {
 ### Expiry
 
 Store object/hash with expiry time of 2 minutes.
+
 ```javascript
 store.set("my_object", {"key1": "value1", "key2": "value2"}, 120 * 1000); // Expires in 120*1000 = 2 minutes.
 store.get("my_object").key2;
