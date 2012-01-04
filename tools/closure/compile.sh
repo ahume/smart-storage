@@ -1,0 +1,1 @@
+java -jar compiler.jar --js ../../SmartStorage.js --js_output_file ../../SmartStorage.min.js

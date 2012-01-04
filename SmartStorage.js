@@ -1,6 +1,6 @@
-/*
-MIT Licensed - https://raw.github.com/ahume/smart-storage/master/LICENSE
-Copyright (c) 2010 Andy Hume (http://andyhume.net, andyhume@gmail.com)
+/**
+* @preserve MIT Licensed - https://raw.github.com/ahume/smart-storage/master/LICENSE
+* Copyright (c) 2010 Andy Hume (http://andyhume.net, andyhume@gmail.com)
 */
 
 /**
@@ -597,10 +597,8 @@ var WorkerPool = (function getWorker() {
         getWorker: function() {
             var w;
             if (pool.length > 0) {
-                console.log("Reusing worker");
                 w = pool.pop();
             } else {
-                console.log("Creating worker");
                 w = new Worker("../sjcl.js");
             }
             return w;
@@ -610,6 +608,4 @@ var WorkerPool = (function getWorker() {
         },
         pool: pool
     }
-
-
 })();
