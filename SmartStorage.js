@@ -33,11 +33,11 @@ SmartStorage.prototype._setItemForDb = function(key, value, time, callback) {
     // If we're encrypting, then the rest happens in the callback.
     var me = this;
     if (SmartStorage.typeOf(this.password) === 'string') {
-        var worker = WorkerPool.getWorker();
+        var worker = SmartStorage.WorkerPool.getWorker();
         worker.onmessage = function(e) {
             localStorage.setItem(me.dbname + '_' + key, e.data);
             callback(original_value);
-            WorkerPool.releaseWorker(worker);
+            SmartStorage.WorkerPool.releaseWorker(worker);
         }
         worker.postMessage({"set": true, "password": this.password, "value": value });
 
@@ -64,11 +64,11 @@ SmartStorage.prototype._getItemForDb = function(key, callback) {
             callback(value);
             return;
         }
-        var worker = WorkerPool.getWorker();
+        var worker = SmartStorage.WorkerPool.getWorker();
         worker.onmessage = function(e) {
             value = SmartStorage.getCachableValue(e.data);
             callback( JSON.parse(value) );
-            WorkerPool.releaseWorker(worker);
+            SmartStorage.WorkerPool.releaseWorker(worker);
         }
         worker.postMessage({"password": this.password, "value": value });
         return;
@@ -589,7 +589,7 @@ SmartStorage.typeOf = function(value) {
     return s;
 }
 
-var WorkerPool = (function getWorker() {
+SmartStorage.WorkerPool = (function getWorker() {
     var pool = [],
         workers = [];
 
