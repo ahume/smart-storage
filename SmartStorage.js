@@ -1,24 +1,6 @@
 /*
-MIT Licensed.
-Copyright (c) 2010 Andy Hume (http://andyhume.net, andyhume@gmail.com).
- 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+MIT Licensed - https://raw.github.com/ahume/smart-storage/master/LICENSE
+Copyright (c) 2010 Andy Hume (http://andyhume.net, andyhume@gmail.com)
 */
 
 /**
@@ -29,9 +11,6 @@ function SmartStorage(dbname, password) {
     if (SmartStorage.browserIsSupported()) {
         this.dbname = dbname;
         this.password = password || null;
-        if (this.password) {
-            this.enc_worker = new Worker("../sjcl.js");
-        }
     } else {
         throw "SmartStorage error: You should catch this and deal with browsers that don't support localStorage.";
     }
@@ -54,11 +33,14 @@ SmartStorage.prototype._setItemForDb = function(key, value, time, callback) {
     // If we're encrypting, then the rest happens in the callback.
     var me = this;
     if (SmartStorage.typeOf(this.password) === 'string') {
-        this.enc_worker.onmessage = function(e) {
+        var worker = WorkerPool.getWorker();
+        worker.onmessage = function(e) {
             localStorage.setItem(me.dbname + '_' + key, e.data);
             callback(original_value);
+            WorkerPool.releaseWorker(worker);
         }
-        this.enc_worker.postMessage({"set": true, "password": this.password, "value": value });
+        worker.postMessage({"set": true, "password": this.password, "value": value });
+
         return;
     }
     
@@ -82,11 +64,13 @@ SmartStorage.prototype._getItemForDb = function(key, callback) {
             callback(value);
             return;
         }
-        this.enc_worker.onmessage = function(e) {
+        var worker = WorkerPool.getWorker();
+        worker.onmessage = function(e) {
             value = SmartStorage.getCachableValue(e.data);
             callback( JSON.parse(value) );
+            WorkerPool.releaseWorker(worker);
         }
-        this.enc_worker.postMessage({"password": this.password, "value": value });
+        worker.postMessage({"password": this.password, "value": value });
         return;
     }
     
@@ -140,6 +124,38 @@ SmartStorage.prototype.set = function(key, value, time, callback) {
 }
 
 /**
+* Set multiple keys/values. Overrides anything that is already set.
+* @param {object} data Object of key/value pairs to store.
+* @param optional expiry time in milliseconds.
+*/
+SmartStorage.prototype.multiSet = function(data, time, callback) {
+    if (arguments.length < 1) {
+        throw "SmartStorage error: multiSet() requires at least 1 arguments.";
+    }
+    var count = added = 0;
+    if (Object.keys) {
+        var count = Object.keys(data).length
+    } else {
+        for (k in data) if (data.hasOwnProperty(k)) count++;
+    }
+    for (var key in data) {
+        if (data.hasOwnProperty(key)) {
+            if (this.password) {
+                this._setItemForDb(key, data[key], time, function(v) {
+                    added++;
+                    if (added === count) {
+                        callback();
+                    }
+                });
+                continue; // Restart the loop if we're asynchronous.
+            }
+            this._setItemForDb(key, data[key], time);
+        }
+    }
+    return;
+}
+
+/**
 * Get value for passed in key.
 * @param {String} key The key to lookup.
 * @returns The requested value or null if it doesn't exist.
@@ -172,6 +188,20 @@ SmartStorage.prototype.clear = function() {
             localStorage.removeItem(key);
         }
     }
+}
+
+/**
+* Get the number of kays in the db.
+* @returns The number of keys
+*/
+SmartStorage.prototype.count = function() {
+    var n = 0;
+    for (var key in localStorage) {
+        if (key.indexOf(this.dbname) === 0) { // dbname is always index 0.
+            n++
+        }
+    }
+    return n;
 }
 
 /**
@@ -558,3 +588,28 @@ SmartStorage.typeOf = function(value) {
     }
     return s;
 }
+
+var WorkerPool = (function getWorker() {
+    var pool = [],
+        workers = [];
+
+    return {
+        getWorker: function() {
+            var w;
+            if (pool.length > 0) {
+                console.log("Reusing worker");
+                w = pool.pop();
+            } else {
+                console.log("Creating worker");
+                w = new Worker("../sjcl.js");
+            }
+            return w;
+        },
+        releaseWorker: function(w) {
+            pool.push(w);
+        },
+        pool: pool
+    }
+
+
+})();

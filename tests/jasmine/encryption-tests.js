@@ -294,6 +294,34 @@ describe ("EncryptedSmartStorage", function() {
         });
     });
 
+    describe("multiset function", function() {
+        it("should be able to set multiple values at once", function() {
+            var result = null;
+            a.multiSet({"key1":"value1", "key2":"value2", "key3":"value3",
+                        "key4":"value4", "key5":"value5", "key6":"value6",
+                        "key7":"value7", "key8":"value8", "key9":"value9"}, null, function(v) { result = v });
+
+            waitsFor(function() {
+                return (result !== null);
+            }, "multiset function never returned value", 1000);
+
+            runs(function() {
+                result = null;
+                a.get("key1", function(v) { result = v });
+            })
+
+            waitsFor(function() {
+                return (result !== null);
+            }, "get function never returned value", 1000);
+
+            runs(function() {
+                expect(result).toEqual("value1");
+            })
+
+
+        });
+    });
+
     describe("setnx function", function() {
         it("should return false if key already exists", function() {
             var result = null;

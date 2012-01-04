@@ -47,14 +47,14 @@ Store object/hash with expiry time of 2 minutes.
     store.incr("my_int");
     >> 12
 
-Implemented so far
-------------------
+Methods of SmartStorage
+-----------------------
 
 * `set(key, val, [expiry])` - Set key to the value. Optional expiry time in milliseconds. Overrides anything that is already set.
 
 * `get(key)` - Get value for passed in key. Returns null if it doesn't exist.
 
-* `remove(key)` - Removes an entry from the browser store.
+* `remove(key)` - Removes an entry from the current store.
 
 * `append(val)` - If key exists and is a string, this appends the value to the end of that string, and returns the new length of the string. If key does not exist it creates it, similar to set().
 
@@ -67,6 +67,12 @@ Implemented so far
 * `setnx(key, value)` - Set key to value only if no value exists for that key.
 
 * `getset(key, value)` - Sets key to value and returns the old value stored in key.
+
+* `multiSet({key: value, key: value, ... }, [expiry])` - Set multiple keys to values in the current store. Overrides anything that is already set. Optional expiry time in milliseconds.
+
+* `clear()` - Remove all keys from the current store.
+
+* `count()` - Return the number of keys in the current store.
 
 * `expire(key, time)` - Set expiry time on a key. Returns true if the key existed and expiry has been applied, false if not.
 

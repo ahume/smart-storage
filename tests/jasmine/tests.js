@@ -69,6 +69,14 @@ describe("SmartStorage", function() {
         expect(function() {a.set("my_func", fn)}).toThrow();
     });
 
+    describe("MultiSet function", function() {
+        it("should allow setting multiple keys at once", function() {
+            a.multiSet({"key1":"value1", "key2":"value2"});
+            expect(a.get("key1")).toEqual("value1");
+            expect(a.get("key2")).toEqual("value2");
+        })
+    });
+
     describe("Clear function", function() {
         it("show clear a given database", function() {
             a.set("key1", "value1");
@@ -84,6 +92,19 @@ describe("SmartStorage", function() {
 
             expect(a.get("key1")).toBeNull();
             expect(b.get("key1")).toEqual("value1");
+        })
+    });
+
+    describe("Count function", function() {
+        it("gives current number of keys in db", function() {
+            a.set("key1", "value1");
+            b.set("key1", "value1");
+            a.set("key2", "value2");
+            expect(a.count()).toEqual(2);
+            a.set("key3", "value3");
+            expect(a.count()).toEqual(3);
+            a.remove("key3");
+            expect(a.count()).toEqual(2);
         })
     });
 
