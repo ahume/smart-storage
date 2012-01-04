@@ -9,13 +9,14 @@ It also uses SJCL to optionally allow for storing encrypted data in the store.
 
 Examples
 --------
+```javascript
+var store = new SmartStorage("my_store");
 
-    var store = new SmartStorage("my_store");
-
-    // Store string
-    store.set("key", "value");
-    store.get("key");
-    >> "value"
+// Store string
+store.set("key", "value");
+store.get("key");
+>> "value"
+```
 
 ### Encrypt
 
@@ -24,28 +25,30 @@ To encrypt data for storage, send a password string as a second argument to Smar
     var enc_store = new SmartStorage("my_enc_store", "secret_password");
 
 This particular branch uses Workers to do the encryption, which means all calls to storage are asynchronous, and might look like:
-
-    enc_store.set("key", "value", null, function(value) {
-        // Do something with value
-    })
-    enc_store.get("key", function(value) {
-        // Do something with value
-    })
+```javascript
+enc_store.set("key", "value", null, function(value) {
+    // Do something with value
+})
+enc_store.get("key", function(value) {
+    // Do something with value
+})
+```
 
 
 ### Expiry
 
 Store object/hash with expiry time of 2 minutes.
+```javascript
+store.set("my_object", {"key1": "value1", "key2": "value2"}, 120 * 1000); // Expires in 120*1000 = 2 minutes.
+store.get("my_object").key2;
+>> "value2"
 
-    store.set("my_object", {"key1": "value1", "key2": "value2"}, 120 * 1000); // Expires in 120*1000 = 2 minutes.
-    store.get("my_object").key2;
-    >> "value2"
-
-    store.set("my_int", 10);
-    store.incr("my_int");
-    >> 11
-    store.incr("my_int");
-    >> 12
+store.set("my_int", 10);
+store.incr("my_int");
+>> 11
+store.incr("my_int");
+>> 12
+```
 
 Methods of SmartStorage
 -----------------------
