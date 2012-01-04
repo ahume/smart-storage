@@ -18,27 +18,7 @@ store.get("key");
 >> "value"
 ```
 
-### Encrypt
-
-To encrypt data for storage, send a password string as a second argument to SmartStorage.
-
-```javascript
-var enc_store = new SmartStorage("my_enc_store", "secret_password");
-```
-
-Web Workers are used to do the encryption, which means all calls to storage are asynchronous, and might look like:
-
-```javascript
-enc_store.set("key", "value", null, function(value) {
-    // Do something with value
-})
-enc_store.get("key", function(value) {
-    // Do something with value
-})
-```
-
-
-### Expiry
+### Expiration
 
 Store object/hash with expiry time of 2 minutes.
 
@@ -46,13 +26,29 @@ Store object/hash with expiry time of 2 minutes.
 store.set("my_object", {"key1": "value1", "key2": "value2"}, 120 * 1000); // Expires in 120*1000 = 2 minutes.
 store.get("my_object").key2;
 >> "value2"
-
-store.set("my_int", 10);
-store.incr("my_int");
->> 11
-store.incr("my_int");
->> 12
 ```
+
+### Encryption
+
+To encrypt data for storage, send a password string as a second argument to SmartStorage.
+
+```javascript
+var enc_store = new SmartStorage("my_enc_store", "secret_password");
+```
+
+Web Workers are used to do the encryption, which means once you have set a password all calls to storage are asynchronous, and might look like:
+
+```javascript
+enc_store.set("key", "value", null, function(value) {
+    // Do something with value
+});
+enc_store.get("key", function(value) {
+    // Do something with value
+});
+```
+
+The callback function is always the last argument, meaning you need to explicilty pass `null` to `set` as the third argument if you're not setting an expiry time.
+
 
 Methods of SmartStorage
 -----------------------
@@ -103,3 +99,4 @@ The JavaScript encryption gives *some* level of security, but no assurance. Ensu
 More
 ----
 - Atomicity of certain operations? eg. incr, append
+- Keys should be encrypted too.
